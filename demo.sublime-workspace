@@ -1,0 +1,757 @@
+{
+	"auto_complete":
+	{
+		"selected_items":
+		[
+			[
+				"save",
+				"saveFp	FILE *"
+			],
+			[
+				"IM",
+				"IMAGEX	macro"
+			],
+			[
+				"IMG",
+				"IMAGEX	macro"
+			],
+			[
+				"read",
+				"readFp	FILE *"
+			],
+			[
+				"prj",
+				"prj	float[]"
+			],
+			[
+				"elli",
+				"ellipsoidParameterTable	double [7][10]"
+			],
+			[
+				"Del",
+				"DeltaT2	double"
+			],
+			[
+				"spher",
+				"spherePrjCal(double *sphereParam)	void"
+			],
+			[
+				"pixel",
+				"pixel1	MyPoint"
+			],
+			[
+				"pixe",
+				"pixel1	MyPoint"
+			],
+			[
+				"sourc",
+				"source1	MyPoint"
+			],
+			[
+				"px",
+				"pixel1	MyPoint"
+			],
+			[
+				"sou",
+				"source1	MyPoint"
+			],
+			[
+				"matrix",
+				"matrixFinal	double[][][][][][][]"
+			],
+			[
+				"matrixm",
+				"matrixMulti(MyPoint inPoint, double *inMatrix, MyPoint *outPoint)	void"
+			],
+			[
+				"mati",
+				"matrix1	double[]"
+			],
+			[
+				"mat",
+				"matrixTmp	double[][][][][][]"
+			],
+			[
+				"matri",
+				"matrix4	double[][][][]"
+			],
+			[
+				"matix",
+				"matrixTmp	double[][][][][][]"
+			],
+			[
+				"ma",
+				"matrix2	double[][]"
+			],
+			[
+				"source",
+				"source0	MyPoint"
+			],
+			[
+				"ZOOM",
+				"ZOOM	macro"
+			],
+			[
+				"D2",
+				"D2R	macro"
+			],
+			[
+				"IMA",
+				"IMAGEX	macro"
+			],
+			[
+				"prin",
+				"printMatrix4x4(double *matrix)	void"
+			],
+			[
+				"fp",
+				"fp	FILE *"
+			],
+			[
+				"value",
+				"valuedouble	double"
+			],
+			[
+				"val",
+				"valueint	int"
+			],
+			[
+				"printf",
+				"printf	printf …"
+			],
+			[
+				"print",
+				"printf	printf …"
+			],
+			[
+				"file",
+				"fileContent	char *"
+			],
+			[
+				"SEEK",
+				"SEEK_SET	macro"
+			],
+			[
+				"dis",
+				"display_1()	void"
+			],
+			[
+				"KEY",
+				"KEY2	macro"
+			],
+			[
+				"leng",
+				"length	double [450]"
+			],
+			[
+				"le",
+				"lengthSquare	double"
+			],
+			[
+				"inde",
+				"indexk	int"
+			],
+			[
+				"merge",
+				"mergeSortUnique(double *dstArr, int *dstNum, double *src1, double srcNum1, double *src2, double srcNum2, double *src3, double srcNum3)	void"
+			],
+			[
+				"dst",
+				"dstNum	int *"
+			],
+			[
+				"src",
+				"src1	double *"
+			],
+			[
+				"for",
+				"fori	For Loop"
+			],
+			[
+				"pix",
+				"pixel1	MyPoint"
+			],
+			[
+				"cal",
+				"calculateMinMaxOfPlane(int *min, int *max, double s, double p, double tmin, double tmax, int N, double edgen, double edge1)	void"
+			],
+			[
+				"edg",
+				"edgen	double"
+			],
+			[
+				"z",
+				"zrelative	double"
+			],
+			[
+				"Wo",
+				"workbook"
+			],
+			[
+				"off",
+				"offsetX	double"
+			],
+			[
+				"vox",
+				"voxel1	MyPoint"
+			],
+			[
+				"mul",
+				"matrixMulti(MyPoint inPoint, double *inMatrix, MyPoint *outPoint)	void"
+			],
+			[
+				"mar",
+				"matrixRes	double[]"
+			],
+			[
+				"IMAG",
+				"IMAGEX	macro"
+			],
+			[
+				"sys",
+				"system(const char *)	int"
+			],
+			[
+				"tmp",
+				"tmpprj	float [23592960]"
+			],
+			[
+				"zObj",
+				"zObjBottom	double"
+			],
+			[
+				"cy",
+				"cylinderParameterTable	float [2][5]"
+			],
+			[
+				"saveF",
+				"saveFile(char *filename)	int"
+			],
+			[
+				"out",
+				"outHead	BIN_HEADER"
+			],
+			[
+				"tm",
+				"tmpOffset	float"
+			],
+			[
+				"fbp",
+				"fbp"
+			],
+			[
+				"ar",
+				"argv	char*[]"
+			],
+			[
+				"img",
+				"imgArray1"
+			],
+			[
+				"tp",
+				"type"
+			],
+			[
+				"im",
+				"import"
+			],
+			[
+				"mt",
+				"myList"
+			],
+			[
+				"f_",
+				"f_raw	u8 *"
+			],
+			[
+				"n",
+				"nSpeed	double"
+			],
+			[
+				"t_comm",
+				"t_commaNum	u8"
+			],
+			[
+				"t_",
+				"t_commaPos	u8[]"
+			],
+			[
+				"GPIO_pins",
+				"GPIO_PIN_SET	GPIO_PinState"
+			],
+			[
+				"__HAL_RCC_GPIOD_",
+				"__HAL_RCC_GPIOD_CLK_ENABLE()	macro"
+			],
+			[
+				"HAL_GPIO_R",
+				"HAL_GPIO_WritePin(int *GPIOx, int GPIO_Pin, GPIO_PinState PinState)	void"
+			],
+			[
+				"LED",
+				"LED0_Init()	void"
+			],
+			[
+				"OSTaskCreate",
+				"OSTaskCreateExt(void (*task)(void *), void *p_arg, OS_STK *ptos, INT8U prio, INT16U id, OS_STK *pbos, INT32U stk_size, void *pext, INT16U opt)	INT8U"
+			],
+			[
+				"STAR",
+				"START_TASK_PRIO"
+			],
+			[
+				"Star",
+				"Start_Tast"
+			],
+			[
+				"OS",
+				"OS_TASK_OPT_STK_CHK"
+			],
+			[
+				"Int",
+				"INT32U"
+			],
+			[
+				"Sta",
+				"START_STK_SIZE"
+			],
+			[
+				"Start",
+				"START_TASK_PRIO"
+			],
+			[
+				"ST",
+				"START_TASK_STK"
+			],
+			[
+				"de",
+				"define"
+			],
+			[
+				"Inc",
+				"Inc	#include <…>"
+			]
+		]
+	},
+	"build_system": "",
+	"command_palette":
+	{
+		"height": 81.0,
+		"selected_items":
+		[
+			[
+				"Snippet: com",
+				"Snippet: comments-line-c"
+			],
+			[
+				"Package Control: ",
+				"Package Control: Install Package"
+			],
+			[
+				"Package Control: in",
+				"Package Control: Install Package"
+			],
+			[
+				"Package Control:",
+				"Package Control: Install Package"
+			],
+			[
+				"Snippet: ",
+				"Snippet: #include <…>"
+			],
+			[
+				"Snippet: for",
+				"Snippet: Vector For Loop"
+			],
+			[
+				"Package Control: Ins",
+				"Package Control: Install Package"
+			]
+		],
+		"width": 400.0
+	},
+	"console":
+	{
+		"height": 181.0
+	},
+	"distraction_free":
+	{
+		"menu_visible": true,
+		"show_minimap": false,
+		"show_open_files": false,
+		"show_tabs": false,
+		"side_bar_visible": false,
+		"status_bar_visible": false
+	},
+	"file_history":
+	[
+		"/D/work/E823/ADIS16448/demo/USER/main.c",
+		"/D/work/E823/ADIS16448/demo/CORE/core_cm4.h",
+		"/D/work/E823/ADIS16448/demo/SYSTEM/delay/delay.c",
+		"/D/work/E823/ADIS16448/demo/demo.sublime-project",
+		"/C/Keil_v5/ARM/ARMCC/include/stdint.h",
+		"/D/Hobby/STMWorkSpace/QuadcopterRun/quadcopter_sublime_prj.sublime-project",
+		"/D/Desktop/simuTest/CL-FDK-WJZ.c",
+		"/D/Desktop/HeadPhantomPrj/HeadPhantomPrj.c",
+		"/D/work/BUAA_Lab/[D]HeadPhantomPrj/HeadPhantomPrj.c",
+		"/D/Desktop/HeadPhantomFDK/CL-FDK-WJZ.c",
+		"/D/work/E823/组合导航算法的问题.md",
+		"/D/work/E823/20170302交流总结.md",
+		"/D/work/BUAA_Lab/[D]四轴旋转/3D实验和仿真程序/FourAxisesRotationSimulation/fbp/fbp.cpp",
+		"/D/work/BUAA_Lab/CL/Simu-CL-Prj-ConeBeam-Bubble/CL-Prj.c",
+		"/D/VSProjects/Prj3D-Simu/Prj3D-Simu.cpp",
+		"/D/VSProjects/X-rayPrj/X-rayPrj.cpp",
+		"/D/Desktop/head/HeadPhantom.pha",
+		"/D/Desktop/head/TableOfTissues",
+		"/D/Hobby/cJSON/cJSONTest/cJSON.c",
+		"/D/Hobby/cJSON/cJSONTest/build/cjson-1.js",
+		"/D/Hobby/cJSON/cJSONTest/cJSON.h",
+		"/D/Hobby/cJSON/cJSONTest/build/cJSON.js",
+		"/E/Program Files/SublimeText2/Data/Packages/User/MySnippets/comments-line-c.sublime-snippet",
+		"/D/downloads/cJSONFiles/cJSON/test.c",
+		"/D/downloads/cJSONFiles/cJSON/README",
+		"/D/downloads/cJSONFiles/cJSON/cJSON.h",
+		"/D/downloads/cJSONFiles/cJSON/cJSON.c",
+		"/D/work/BUAA_Lab/CL/Plasticine-2-CL-FDK/CL-FDK.c",
+		"/D/work/BUAA_Lab/CL-ART/CL-ART-WJZ-2-JBH.c",
+		"/D/Desktop/code_reference/CL_NEW_ART.cpp",
+		"/D/work/BUAA_Lab/CL-ART/EXP-CL-ART-underTaking/CL-ART-WJZ.c",
+		"/D/work/BUAA_Lab/CL/PCBSMALL-CL-FDK/CL-FDK-WJZ.c",
+		"/D/BaiduYunDownload/ALIENTEK MiniSTM32 V3.0开发板资料/4，程序源码/2，标准例程-V3.5库函数版本/ALIENTEK MINISTM32 实验7 定时器中断实验/HARDWARE/TIMER/timer.c",
+		"/D/work/NewCubeTimer/Demo/APP/LCD/lcd.c",
+		"/D/work/NewCubeTimer/TimerF103/USER/main.c",
+		"/D/downloads/diffutils-3.5/diffutils-3.5/src/diff.c",
+		"/D/work/BUAA_Lab/CL-ART/CL-ART-WJZ.c",
+		"/D/downloads/Tinyhttpd-master/Tinyhttpd-master/httpd.c",
+		"/D/downloads/Tinyhttpd-master/Tinyhttpd-master/README.md",
+		"/D/Desktop/CL_NEW_ART.cpp",
+		"/D/downloads/sqlite-amalgamation-3170000/sqlite3.h",
+		"/D/downloads/sqlite-amalgamation-3170000/sqlite3.c",
+		"/D/Desktop/para-art.cpp",
+		"/D/work/BUAA_Lab/老师源文件/扇束FBP重建/fbp-hilbert.c",
+		"/D/work/BUAA_Lab/CL/CL-FDK-WJZ.c",
+		"/D/work/BUAA_Lab/CL/PCBSMALL-CL-FDK/cllll.c",
+		"/D/work/BUAA_Lab/CL/PCB-CL-FDK-ConeBeamNormal-AxisUnfit/CL-FDK.c",
+		"/D/work/NewCubeTimer/worknote/PinUsage.md",
+		"/D/work/NewCubeTimer/Demo/APP/show/show.c",
+		"/D/work/NewCubeTimer/Demo/USER/main.c",
+		"/D/work/NewCubeTimer/Demo/APP/show/show.h",
+		"/D/work/NewCubeTimer/Demo/APP/key/key.c",
+		"/D/work/NewCubeTimer/Demo/APP/module/module.c",
+		"/D/work/NewCubeTimer/Demo/SYSTEM/usart/usart.h",
+		"/D/work/NewCubeTimer/Demo/demo.sublime-project",
+		"/D/work/NewCubeTimer/Demo/APP/key/key.h",
+		"/D/work/NewCubeTimer/Demo/APP/LCD/lcd.h",
+		"/D/work/NewCubeTimer/Demo/CORE/core_cm4.h",
+		"/D/work/NewCubeTimer/Demo/USER/stm32f4xx.h",
+		"/D/work/NewCubeTimer/Demo/CORE/core_cmInstr.h",
+		"/E/Program Files/SublimeText2/Data/Packages/SublimeClang/SublimeClang.sublime-settings",
+		"/E/Program Files/SublimeText2/Data/Packages/User/SublimeClang.sublime-settings",
+		"/E/Program Files/SublimeText2/Data/Packages/SublimeClang/clang/include/stdint.h",
+		"/D/work/NewCubeTimer/Demo/APP/btusart/btusarrt.h",
+		"/D/Desktop/Test/test.c",
+		"/D/work/BUAA_Lab/CL-ART/CL-ART/CL-ART-WJZ.c",
+		"/D/work/NewCubeTimer/Demo/APP/alarm/alarm.h",
+		"/D/work/NewCubeTimer/Demo/APP/alarm/alarm.c",
+		"/D/work/BUAA_Lab/师兄文件/锥束ART/ART重建/prj.cpp",
+		"/D/work/BUAA_Lab/CL-ART/CL-ART/CL-FDK-WJZ.c",
+		"/D/work/BUAA_Lab/CL-ART/cl-art-matlab-2017-01-03bak/intersectionLineGrid.m",
+		"/D/work/BUAA-Master/[1]工程数字图像处理/SY1507511-王景正-数字图像处理考试/第5题/fifth.m",
+		"/D/Desktop/ART/ReadMe",
+		"/D/work/BUAA_Lab/CL/Yuanhuanzhu-FDK/build/Makefile",
+		"/D/work/BUAA_Lab/CL/Simu-Fang-FDK/CL-FDK.c",
+		"/D/software/program files/SublimeText2/Data/Packages/User/SublimeClang.sublime-settings",
+		"/D/software/program files/SublimeText2/Data/Packages/SublimeClang/SublimeClang.sublime-settings",
+		"/D/software/program files/SublimeText2/Data/Packages/C++/C.tmLanguage",
+		"/D/software/program files/SublimeText2/Data/Packages/C++/C++.tmLanguage",
+		"/D/Desktop/.vimrc",
+		"/D/work/BUAA_Lab/CL/Memory-CL-FDK-ConeBeam/CL-FDK.c",
+		"/D/Desktop/test2.py",
+		"/D/Desktop/LvYiQi/wordSort.py",
+		"/D/work/BUAA_Lab/CL/Simu-CL-ART-ConeBeam/CL-ART.c",
+		"/D/work/BUAA_Lab/CL/CFRP-CL-FDK/CL-FDK.c",
+		"/D/work/BUAA_Lab/CL/Simu-CL-FDK-ConeBeam-Bubble/CL-FDK.c",
+		"/D/work/BUAA_Lab/CL/Simu-CL-FDK-ConeBeamNormal-AxisUnfit/CL-FDK.c",
+		"/D/work/BUAA_Lab/CL/PCB-CL-FDK-ConeBeamNormal/CL-FDK.c",
+		"/D/work/BUAA_Lab/CL/Simu-CL-Prj-ConeBeamNormal-AxisUnfit/CL-Prj.c",
+		"/D/work/BUAA_Lab/CL/Simu-CL-FDK-ConeBeamNormal/CL-FDK.c",
+		"/D/work/BUAA_Lab/CL/Simu-CL-Prj-ConeBeamNormal/CL-Prj.c",
+		"/D/work/BUAA_Lab/CL/Test/Test.c",
+		"/D/work/BUAA_Lab/CL/Simu-CL-Prj-ConeBeamNormal-AxisUnfit/Test.c",
+		"/D/Desktop/CL_dianluban_FDK.cpp",
+		"/D/Desktop/FDK2016-01-20.cpp",
+		"/D/Desktop/prj-3d.cpp",
+		"/D/Desktop/test.py",
+		"/D/Desktop/CL-Prj-Cone-Beam/CL-Prj.c",
+		"/D/software/program files/SublimeText2/Data/Packages/User/CTags.sublime-settings",
+		"/D/software/program files/SublimeText2/Data/Packages/CTags/CTags.sublime-settings",
+		"/C/MinGW/include/stdio.h",
+		"/C/MinGW/include/stdlib.h",
+		"/D/Desktop/CL-Prj/CMakeLists.txt",
+		"/D/Desktop/CL-Prj/CL-Prj.c",
+		"/D/Desktop/CL-Prj/Makefile",
+		"/D/Desktop/CL-Prj/hello.c",
+		"/D/VSProjects/Get3DProjection/Get3DProjection/get3DProjection.cpp",
+		"/D/VSProjects/FDK_Prj/FDK_Prj.cpp",
+		"/D/Desktop/DEI_Experiment_1st/fbp/fbp-abs-cut/transferToXZ.c",
+		"/D/Desktop/DEI_Experiment_1st/fbp/fbp_abs.c",
+		"/D/Desktop/DEI_Experiment_1st/MIR/Capsule/CT_Res/DEI_3D_FBP/run3DCT_phi.c",
+		"/D/Desktop/DEI_Experiment_1st/MIR/Capsule/CT_Res/DEI_3D_FBP/run3DCT_abs.c",
+		"/D/Desktop/DEI_Experiment_1st/MIR/Capsule/CT_Res/DEI_3D_FBP/fbp_abs.c",
+		"/D/Desktop/DEI_Experiment_1st/MIR/Capsule/CT_Res/DEI_3D_FBP/fbp_phi.c",
+		"/D/Desktop/DEI_Experiment_2nd/data/CLFBP/CL_dianluban_FDK.cpp",
+		"/D/Desktop/DEI_Experiment_1st/MIR/Capsule/CT_Res/DEI_3D_FBP/fineAdjust.c",
+		"/D/Desktop/DEI_Experiment_1st/MIR/Capsule/CT_Res/DEI_3D_FBP/fbp.c",
+		"/D/Desktop/fbp.cpp",
+		"/D/Desktop/DEI_Experiment_1st/MIR/Capsule/CT_Res/DEI_3D_FBP/run3DCT.c",
+		"/D/Desktop/DEI_CT_1115/DEI_3D_FBP/make.bat",
+		"/D/Desktop/DEI_CT_1115/DEI_3D_FBP/fineAdjust.c",
+		"/D/Desktop/DEI_CT_1115/DEI_3D_FBP/run3DCT.c",
+		"/D/software/program files/SublimeText2/Data/Packages/Default/Default (Windows).sublime-keymap",
+		"/D/software/program files/SublimeText2/Data/Packages/User/Default (Windows).sublime-keymap",
+		"/D/Desktop/DEI_CT_1115/DEI_3D_FBP/fine",
+		"/D/Desktop/DEI_CT_1115/DEI_3D_FBP/fbp.c",
+		"/D/Desktop/DEI_CT_1115/DEI_3D_FBP/run.c",
+		"/D/Desktop/DEI_CT_1115/DEI_3D_FBP/fbp-pall.o"
+	],
+	"find":
+	{
+		"height": 34.0
+	},
+	"find_in_files":
+	{
+		"height": 0.0,
+		"where_history":
+		[
+		]
+	},
+	"find_state":
+	{
+		"case_sensitive": true,
+		"find_history":
+		[
+			"WIDTH",
+			"i",
+			"file",
+			"1",
+			"sphereParam",
+			"1",
+			"ellipsoidParam",
+			"dlta",
+			"x",
+			"matrix",
+			"LCD_Display_Dir",
+			"accept_request",
+			"maxcount",
+			"x000",
+			"(ztop-zbot)",
+			"\\(ztop-zbot\\)",
+			"(ztop-zbot)",
+			"imageX",
+			"imageY",
+			" main",
+			"main(",
+			"main",
+			"imageX",
+			"imageY",
+			"-",
+			"Unknown",
+			"||",
+			"|",
+			" ",
+			"PB0",
+			"共用",
+			"1",
+			"0",
+			"ffffff",
+			"fffffff",
+			"ffffff",
+			"24",
+			"g_countTime",
+			"1",
+			"0",
+			"1",
+			"0",
+			"1",
+			"0",
+			"D",
+			"tz",
+			"2",
+			"1",
+			", ",
+			"startFlag",
+			"IMGX",
+			"(2)",
+			"(1)",
+			"IMGX",
+			"(3)",
+			"(1)",
+			"IMGY",
+			"pixel",
+			"(3)",
+			"(2)",
+			"im",
+			"i",
+			"thita",
+			"Set",
+			"Se",
+			"GPIOE",
+			"Directory",
+			"Deri",
+			"Di",
+			"Dire",
+			"43",
+			"max",
+			"<",
+			"				",
+			"print",
+			"                 ",
+			"                ",
+			"               ",
+			"              ",
+			"             ",
+			"            ",
+			"           ",
+			"          ",
+			"         ",
+			"        ",
+			"       ",
+			"      ",
+			"     ",
+			"BETA",
+			"offsetX",
+			"BETA",
+			"i",
+			"BETA",
+			"ALPHA",
+			"offsetX",
+			"ALPHA",
+			"BETA",
+			"D2",
+			"4",
+			"0,",
+			"xs",
+			"ys",
+			"zs",
+			"source",
+			"i",
+			"voxel",
+			"j",
+			"k",
+			"i",
+			"IMAGEY",
+			"IMAGEX",
+			"WIDTH",
+			"o",
+			"i",
+			"read",
+			"layerNum",
+			"count",
+			"float",
+			"ctrl+shift+k",
+			"int",
+			"10",
+			"0",
+			"g_gpsRawStd",
+			"code",
+			"*/\n",
+			"				case 'G'://standard\n					for(i = 0; i < 100; i++)\n					{\n						g_gpsRaw[i] = USART_RECEIVE_DATA_GPS[i];\n					}\n					break;",
+			"KEY",
+			"LED0LED0"
+		],
+		"highlight": true,
+		"in_selection": false,
+		"preserve_case": false,
+		"regex": false,
+		"replace_history":
+		[
+		],
+		"reverse": false,
+		"show_context": true,
+		"use_buffer2": true,
+		"whole_word": false,
+		"wrap": true
+	},
+	"incremental_find":
+	{
+		"height": 0.0
+	},
+	"input":
+	{
+		"height": 39.0
+	},
+	"layout":
+	{
+		"cells":
+		[
+			[
+				0,
+				0,
+				1,
+				1
+			]
+		],
+		"cols":
+		[
+			0.0,
+			1.0
+		],
+		"rows":
+		[
+			0.0,
+			1.0
+		]
+	},
+	"menu_visible": true,
+	"output.clang":
+	{
+		"height": 78.0
+	},
+	"output.exec":
+	{
+		"height": 148.0
+	},
+	"output.markdown":
+	{
+		"height": 148.0
+	},
+	"replace":
+	{
+		"height": 0.0
+	},
+	"save_all_on_build": true,
+	"select_file":
+	{
+		"height": 0.0,
+		"selected_items":
+		[
+			[
+				"fdk",
+				"/D/Desktop/FDK2016-01-20.cpp"
+			],
+			[
+				"",
+				"/D/Desktop/CL-FDK-Cone-Beam/CL-FDK.c"
+			]
+		],
+		"width": 0.0
+	},
+	"select_project":
+	{
+		"height": 500.0,
+		"selected_items":
+		[
+			[
+				"",
+				"/D/Hobby/STMWorkSpace/[0]newWorkspace/TemplateOS/STM32_ST2_Edit.sublime-project"
+			]
+		],
+		"width": 380.0
+	},
+	"show_minimap": true,
+	"show_open_files": false,
+	"show_tabs": true,
+	"side_bar_visible": true,
+	"side_bar_width": 177.0,
+	"status_bar_visible": true
+}
