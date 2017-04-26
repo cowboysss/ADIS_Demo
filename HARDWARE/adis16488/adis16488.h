@@ -144,6 +144,8 @@
 //#define FIR_COEF_Dxxx     0x02 to 0x7E//N/A FIR Filter Bank D, Coefficients 60 through 119 Table 62 0x0C R/W Yes 
 // #endif
 
+#include "interface.h"
+
 
 /* function declaration */
 void ADISInit(void);
@@ -155,6 +157,6 @@ u16 ADIS_ReadWriteByte(u16 TxData);
 //u32 ADIS_ReadData(void);
 int16_t ADIS_ReadDataOut(u16 addr);
 int16_t complement2Tureform(u16 code);
-void ADIS_Read9AxisData(void);
+void ADIS_Read9AxisData(IMU_Data_Raw *raw);
 
 #endif //ADIS_16488__H_

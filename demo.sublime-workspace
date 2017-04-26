@@ -4,8 +4,12 @@
 		"selected_items":
 		[
 			[
+				"IMU",
+				"IMU_Data_Raw	typedef"
+			],
+			[
 				"co",
-				"complement2Tureform(u16 code)	int16_t"
+				"comments	comments-line-c"
 			],
 			[
 				"save",
@@ -534,6 +538,7 @@
 		"case_sensitive": true,
 		"find_history":
 		[
+			"gyro",
 			"WIDTH",
 			"i",
 			"file",
@@ -660,8 +665,7 @@
 			"code",
 			"*/\n",
 			"				case 'G'://standard\n					for(i = 0; i < 100; i++)\n					{\n						g_gpsRaw[i] = USART_RECEIVE_DATA_GPS[i];\n					}\n					break;",
-			"KEY",
-			"LED0LED0"
+			"KEY"
 		],
 		"highlight": true,
 		"in_selection": false,

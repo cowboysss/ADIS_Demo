@@ -7,11 +7,11 @@ void ADISInit(void)
 	GPIO_InitTypeDef  GPIO_InitStructure;
 	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOB, ENABLE);//使能GPIOB时钟
 	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_14;//PB3~5复用功能输出	
-  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;//复用功能
-  GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;//推挽输出
-  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;//100MHz
-  GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;//上拉
-  GPIO_Init(GPIOB, &GPIO_InitStructure);//初始化
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;//复用功能
+	GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;//推挽输出
+	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;//100MHz
+	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;//上拉
+	GPIO_Init(GPIOB, &GPIO_InitStructure);//初始化
 
 	// CS = 1
 	PBout(14)=1;
@@ -97,34 +97,50 @@ int16_t complement2Tureform(u16 code)
 	return result;
 }
 
-void ADIS_Read9AxisData(void)
+void ADIS_Read9AxisData(IMU_Data_Raw *raw )
 {
-	int16_t gyro[3]={0}; // 0-x 1-y 2-z
-	int16_t accl[3]={0};
-	int16_t magn[3]={0};
-	int16_t baro=0,temp=0;
-	gyro[0]=ADIS_ReadDataOut(X_GYRO_OUT);
-	gyro[0]=ADIS_ReadDataOut(Y_GYRO_OUT);
-	gyro[1]=ADIS_ReadDataOut(Z_GYRO_OUT);
+	raw->gyro_out[0]=ADIS_ReadDataOut(X_GYRO_OUT);
+	raw->gyro_out[0]=ADIS_ReadDataOut(Y_GYRO_OUT);
+	raw->gyro_out[1]=ADIS_ReadDataOut(Z_GYRO_OUT);
 
-	gyro[2]=ADIS_ReadDataOut(X_ACCL_OUT);
-	accl[0]=ADIS_ReadDataOut(Y_ACCL_OUT);
-	accl[1]=ADIS_ReadDataOut(Z_ACCL_OUT);
+	raw->gyro_out[2]=ADIS_ReadDataOut(X_ACCL_OUT);
+	raw->accl_out[0]=ADIS_ReadDataOut(Y_ACCL_OUT);
+	raw->accl_out[1]=ADIS_ReadDataOut(Z_ACCL_OUT);
 	
-	accl[2]=ADIS_ReadDataOut(X_MAGN_OUT);
-	magn[0]=ADIS_ReadDataOut(Y_MAGN_OUT);
-	magn[1]=ADIS_ReadDataOut(Z_MAGN_OUT);
+	raw->accl_out[2]=ADIS_ReadDataOut(X_MAGN_OUT);
+	raw->magn_out[0]=ADIS_ReadDataOut(Y_MAGN_OUT);
+	raw->magn_out[1]=ADIS_ReadDataOut(Z_MAGN_OUT);
 	
-	magn[2]=ADIS_ReadDataOut(BAROM_OUT);
+	raw->magn_out[2]=ADIS_ReadDataOut(BAROM_OUT);
 	
-	baro = ADIS_ReadDataOut(TEMP_OUT);
+	raw->baro = ADIS_ReadDataOut(TEMP_OUT);
 	
-	// 
+	/* last write 00 into 0x00, in order to get the final data */
 	enableADIS();
-	temp = ADIS_ReadWriteByte(0x8000);
+	raw->temp = ADIS_ReadWriteByte(0x8000);
 	disableADIS();
 	
-	printf("%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%.2f\r\n",gyro[0],gyro[1],gyro[2],accl[0],accl[1],accl[2],magn[0],magn[1],magn[2],baro,temp*0.00565+25);
+	// printf("%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%.2f\r\n",gyro[0],gyro[1],gyro[2],accl[0],accl[1],accl[2],magn[0],magn[1],magn[2],baro,temp*0.00565+25);
+}
+
+void ADIS_Raw2Data(IMU_Data *dstData, IMU_Data_Raw *srcRawData)
+{
+	/* change the raw data to true data*/
+	dstData->gyro[0] = srcRawData->gyro_out[0]*0.02;//+srcRawData->gyro_low[0];
+	dstData->gyro[1] = srcRawData->gyro_out[1]*0.02;//+srcRawData->gyro_low[1];
+	dstData->gyro[2] = srcRawData->gyro_out[2]*0.02;//+srcRawData->gyro_low[2];
+
+	dstData->accl[0] = srcRawData->accl_out[0]*0.02;//+srcRawData->accl_low[0];
+	dstData->accl[1] = srcRawData->accl_out[1]*0.02;//+srcRawData->accl_low[1];
+	dstData->accl[2] = srcRawData->accl_out[2]*0.02;//+srcRawData->accl_low[2];
+
+	dstData->magn[0] = srcRawData->magn_out[0]*0.02;//+srcRawData->magn_low[0];
+	dstData->magn[1] = srcRawData->magn_out[1]*0.02;//+srcRawData->magn_low[1];
+	dstData->magn[2] = srcRawData->magn_out[2]*0.02;//+srcRawData->magn_low[2];
+
+	// baro
+	
+	// temp
 }
 
 // end of this file
