@@ -393,6 +393,7 @@
 	},
 	"file_history":
 	[
+		"/D/Desktop/test/test.c",
 		"/home/wang/Projects/ADIS_Demo/HARDWARE/interface.h",
 		"/home/wang/Projects/ADIS_Demo/USER/main.c",
 		"/home/wang/Projects/ADIS_Demo/HARDWARE/adis16488/adis16488.c",
@@ -519,8 +520,7 @@
 		"/D/Desktop/DEI_Experiment_1st/MIR/Capsule/CT_Res/DEI_3D_FBP/fbp.c",
 		"/D/Desktop/fbp.cpp",
 		"/D/Desktop/DEI_Experiment_1st/MIR/Capsule/CT_Res/DEI_3D_FBP/run3DCT.c",
-		"/D/Desktop/DEI_CT_1115/DEI_3D_FBP/make.bat",
-		"/D/Desktop/DEI_CT_1115/DEI_3D_FBP/fineAdjust.c"
+		"/D/Desktop/DEI_CT_1115/DEI_3D_FBP/make.bat"
 	],
 	"find":
 	{
@@ -538,6 +538,7 @@
 		"case_sensitive": true,
 		"find_history":
 		[
+			";",
 			"gyro",
 			"WIDTH",
 			"i",
@@ -664,8 +665,7 @@
 			"g_gpsRawStd",
 			"code",
 			"*/\n",
-			"				case 'G'://standard\n					for(i = 0; i < 100; i++)\n					{\n						g_gpsRaw[i] = USART_RECEIVE_DATA_GPS[i];\n					}\n					break;",
-			"KEY"
+			"				case 'G'://standard\n					for(i = 0; i < 100; i++)\n					{\n						g_gpsRaw[i] = USART_RECEIVE_DATA_GPS[i];\n					}\n					break;"
 		],
 		"highlight": true,
 		"in_selection": false,
@@ -734,12 +734,12 @@
 		"selected_items":
 		[
 			[
-				"fdk",
-				"/D/Desktop/FDK2016-01-20.cpp"
+				"",
+				"HARDWARE/adis16488/adis16488.c"
 			],
 			[
-				"",
-				"/D/Desktop/CL-FDK-Cone-Beam/CL-FDK.c"
+				"fdk",
+				"/D/Desktop/FDK2016-01-20.cpp"
 			]
 		],
 		"width": 0.0
