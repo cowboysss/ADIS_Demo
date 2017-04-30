@@ -97,30 +97,37 @@ int16_t complement2Tureform(u16 code)
 	return result;
 }
 
-void ADIS_Read9AxisData(IMU_Data_Raw *raw )
+void ADIS_Read11AxisData( IMU_Data_Raw *raw )
 {
 	raw->gyro_out[0]=ADIS_ReadDataOut(X_GYRO_OUT);
-	raw->gyro_out[0]=ADIS_ReadDataOut(Y_GYRO_OUT);
-	raw->gyro_out[1]=ADIS_ReadDataOut(Z_GYRO_OUT);
-
-	raw->gyro_out[2]=ADIS_ReadDataOut(X_ACCL_OUT);
-	raw->accl_out[0]=ADIS_ReadDataOut(Y_ACCL_OUT);
-	raw->accl_out[1]=ADIS_ReadDataOut(Z_ACCL_OUT);
+	raw->gyro_out[0]=ADIS_ReadDataOut(X_GYRO_LOW);
+	raw->gyro_low[0]=ADIS_ReadDataOut(Y_GYRO_OUT);
+	raw->gyro_out[1]=ADIS_ReadDataOut(Y_GYRO_LOW);
+	raw->gyro_low[1]=ADIS_ReadDataOut(Z_GYRO_OUT);
+	raw->gyro_out[2]=ADIS_ReadDataOut(Z_GYRO_LOW);
 	
-	raw->accl_out[2]=ADIS_ReadDataOut(X_MAGN_OUT);
+	raw->gyro_low[2]=ADIS_ReadDataOut(X_ACCL_OUT);
+	raw->accl_out[0]=ADIS_ReadDataOut(X_ACCL_LOW);
+	raw->accl_low[0]=ADIS_ReadDataOut(Y_ACCL_OUT);
+	raw->accl_out[1]=ADIS_ReadDataOut(Y_ACCL_LOW);
+	raw->accl_low[1]=ADIS_ReadDataOut(Z_ACCL_OUT);
+	raw->accl_out[2]=ADIS_ReadDataOut(Z_ACCL_LOW);
+	
+	raw->accl_low[2]=ADIS_ReadDataOut(X_MAGN_OUT);
 	raw->magn_out[0]=ADIS_ReadDataOut(Y_MAGN_OUT);
 	raw->magn_out[1]=ADIS_ReadDataOut(Z_MAGN_OUT);
 	
 	raw->magn_out[2]=ADIS_ReadDataOut(BAROM_OUT);
+	raw->baro_out =ADIS_ReadDataOut(BAROM_LOW);
 	
-	raw->baro = ADIS_ReadDataOut(TEMP_OUT);
+	raw->baro_low = ADIS_ReadDataOut(TEMP_OUT);
 	
 	/* last write 00 into 0x00, in order to get the final data */
 	enableADIS();
 	raw->temp = ADIS_ReadWriteByte(0x8000);
 	disableADIS();
 	
-	// printf("%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%.2f\r\n",gyro[0],gyro[1],gyro[2],accl[0],accl[1],accl[2],magn[0],magn[1],magn[2],baro,temp*0.00565+25);
+//	printf("%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%.2f\r\n",raw->gyro_out[0],raw->gyro_out[1],raw->gyro_out[2],raw->accl_out[0],raw->accl_out[1],raw->accl_out[2],raw->magn_out[0],raw->magn_out[1],raw->magn_out[2],raw->baro_out,raw->temp*0.00565+25);
 }
 
 void ADIS_Raw2Data(IMU_Data *dstData, IMU_Data_Raw *srcRawData)
@@ -134,14 +141,16 @@ void ADIS_Raw2Data(IMU_Data *dstData, IMU_Data_Raw *srcRawData)
 	dstData->accl[1] = srcRawData->accl_out[1]*0.8+srcRawData->accl_low[1]*0.8/65536.0;
 	dstData->accl[2] = srcRawData->accl_out[2]*0.8+srcRawData->accl_low[2]*0.8/65536.0;
 
-	dstData->magn[0] = srcRawData->magn_out[0]*0.1+srcRawData->magn_low[0]*0.1/65536.0;
-	dstData->magn[1] = srcRawData->magn_out[1]*0.1+srcRawData->magn_low[1]*0.1/65536.0;
-	dstData->magn[2] = srcRawData->magn_out[2]*0.1+srcRawData->magn_low[2]*0.1/65536.0;
+	dstData->magn[0] = srcRawData->magn_out[0]*0.1;
+	dstData->magn[1] = srcRawData->magn_out[1]*0.1;
+	dstData->magn[2] = srcRawData->magn_out[2]*0.1;
 
 	// baro
-	dstData->accl = srcRawData->baro_out*40.0+srcRawData->baro_low*20.0/65536.0;
+	dstData->baro = srcRawData->baro_out*40.0+srcRawData->baro_low*20.0/65536.0;
 	// temp
 	dstData->temp = srcRawData->temp*0.00565+25;
+	
+//	printf("%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f\r\n",dstData->gyro[0],dstData->gyro[1],dstData->gyro[2],dstData->accl[0],dstData->accl[1],dstData->accl[2],dstData->magn[0],dstData->magn[1],dstData->magn[2],dstData->baro,dstData->temp);
 }
 
 // end of this file

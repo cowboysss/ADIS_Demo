@@ -21,7 +21,6 @@ typedef struct
     int16_t accl_out[3];    // 0.8 mg
     u16 accl_low[3];        //
     int16_t magn_out[3];    // 0.1 mguass
-    u16 magn_low[3];        //
     int16_t baro_out;       // 40 micro bar
     u16 baro_low;
     int16_t temp;           // degree centigrade

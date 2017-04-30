@@ -157,6 +157,7 @@ u16 ADIS_ReadWriteByte(u16 TxData);
 //u32 ADIS_ReadData(void);
 int16_t ADIS_ReadDataOut(u16 addr);
 int16_t complement2Tureform(u16 code);
-void ADIS_Read9AxisData(IMU_Data_Raw *raw);
+void ADIS_Read11AxisData(IMU_Data_Raw *raw);
+void ADIS_Raw2Data(IMU_Data *dstData, IMU_Data_Raw *srcRawData);
 
 #endif //ADIS_16488__H_
