@@ -95,7 +95,6 @@ void spi_task(void *pdata)
 	while(1)
 	{
 		/* One time transmission */
-
 		ADIS_Read11AxisData(&testImu);
 		ADIS_Raw2Data(&testImuTrue, &testImu);
 		printf("%d,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f\r\n",\
