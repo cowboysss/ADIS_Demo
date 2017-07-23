@@ -6,73 +6,72 @@
 #include "adis16488.h"
 #include "interface.h"
 #include "dma.h"
-/////////////////////////UCOSIIÈÎÎñÉèÖÃ///////////////////////////////////
-//START ÈÎÎñ
-//ÉèÖÃÈÎÎñÓÅÏÈ¼¶
-#define START_TASK_PRIO      			6 //¿ªÊ¼ÈÎÎñµÄÓÅÏÈ¼¶ÉèÖÃÎª×îµÍ
-//ÉèÖÃÈÎÎñ¶ÑÕ»´óĞ¡
+/////////////////////////UCOSIIä»»åŠ¡è®¾ç½®///////////////////////////////////
+/**************************************************/
+//START ä»»åŠ¡
+//è®¾ç½®ä»»åŠ¡ä¼˜å…ˆçº§
+#define START_TASK_PRIO      			6 //å¼€å§‹ä»»åŠ¡çš„ä¼˜å…ˆçº§è®¾ç½®ä¸ºæœ€ä½
+//è®¾ç½®ä»»åŠ¡å †æ ˆå¤§å°
 #define START_STK_SIZE  				64
-//ÈÎÎñ¶ÑÕ»	
+//ä»»åŠ¡å †æ ˆ	
 OS_STK START_TASK_STK[START_STK_SIZE];
-//ÈÎÎñº¯Êı
+//ä»»åŠ¡å‡½æ•°
 void start_task(void *pdata);	
- 			   
-//LED0ÈÎÎñ
-//ÉèÖÃÈÎÎñÓÅÏÈ¼¶
+/**************************************************/               			   
+//LED0ä»»åŠ¡
+//è®¾ç½®ä»»åŠ¡ä¼˜å…ˆçº§
 #define LED0_TASK_PRIO       			10 
-//ÉèÖÃÈÎÎñ¶ÑÕ»´óĞ¡
+//è®¾ç½®ä»»åŠ¡å †æ ˆå¤§å°
 #define LED0_STK_SIZE  		    		128
-//ÈÎÎñ¶ÑÕ»	
+//ä»»åŠ¡å †æ ˆ	
 OS_STK LED0_TASK_STK[LED0_STK_SIZE];
-//ÈÎÎñº¯Êı
+//ä»»åŠ¡å‡½æ•°
 void led0_task(void *pdata);
-
-
-//LED1ÈÎÎñ
-//ÉèÖÃÈÎÎñÓÅÏÈ¼¶
-#define LED1_TASK_PRIO       			50 
-//ÉèÖÃÈÎÎñ¶ÑÕ»´óĞ¡
-#define LED1_STK_SIZE  					128
-//ÈÎÎñ¶ÑÕ»
-OS_STK LED1_TASK_STK[LED1_STK_SIZE];
-//ÈÎÎñº¯Êı
-void led1_task(void *pdata);
-
+/**************************************************/
 #define SPI_TASK_PRIO       			8 
-//ÉèÖÃÈÎÎñ¶ÑÕ»´óĞ¡
+//è®¾ç½®ä»»åŠ¡å †æ ˆå¤§å°
 #define SPI_STK_SIZE  					256
-//ÈÎÎñ¶ÑÕ»
+//ä»»åŠ¡å †æ ˆ
 OS_STK SPI_TASK_STK[SPI_STK_SIZE];
-//ÈÎÎñº¯Êı
+//ä»»åŠ¡å‡½æ•°
 void spi_task(void *pdata);
+/**************************************************/
+#define SDWRITE_TASK_PRIO       			40 
+//è®¾ç½®ä»»åŠ¡å †æ ˆå¤§å°
+#define SDWRITE_STK_SIZE  					256
+//ä»»åŠ¡å †æ ˆ
+OS_STK SDWRITE_TASK_STK[SDWRITE_STK_SIZE];
+//ä»»åŠ¡å‡½æ•°
+void sd_write_task(void *pdata);
+
 #define SEND_BUF_SIZE 200
 u8 SendBuff[SEND_BUF_SIZE]={0};
 
 int main(void)
 { 
  
-	delay_init(168);		  //³õÊ¼»¯ÑÓÊ±º¯Êı
-	LED0_Init();		        //³õÊ¼»¯LED¶Ë¿Ú 
+	delay_init(168);		  //åˆå§‹åŒ–å»¶æ—¶å‡½æ•°
+	LED0_Init();		        //åˆå§‹åŒ–LEDç«¯å£ 
 	uart_init(921600);
 //	MYDMA_Config(DMA2_Stream7,DMA_Channel_4,(u32)&USART1->DR,(u32)SendBuff, SEND_BUF_SIZE);
 	OSInit();   
- 	OSTaskCreate(start_task,(void *)0,(OS_STK *)&START_TASK_STK[START_STK_SIZE-1],START_TASK_PRIO );//´´½¨ÆğÊ¼ÈÎÎñ
+ 	OSTaskCreate(start_task,(void *)0,(OS_STK *)&START_TASK_STK[START_STK_SIZE-1],START_TASK_PRIO );//åˆ›å»ºèµ·å§‹ä»»åŠ¡
 	OSStart();	
 }
 
- //¿ªÊ¼ÈÎÎñ
+ //å¼€å§‹ä»»åŠ¡
 void start_task(void *pdata)
 {
   OS_CPU_SR cpu_sr=0;
 	pdata = pdata; 
-  OS_ENTER_CRITICAL();			//½øÈëÁÙ½çÇø(ÎŞ·¨±»ÖĞ¶Ï´ò¶Ï)    
+  OS_ENTER_CRITICAL();			//è¿›å…¥ä¸´ç•ŒåŒº(æ— æ³•è¢«ä¸­æ–­æ‰“æ–­)    
  	OSTaskCreate(led0_task,(void *)0,(OS_STK*)&LED0_TASK_STK[LED0_STK_SIZE-1],LED0_TASK_PRIO);						   
  	OSTaskCreate(spi_task,(void *)0,(OS_STK*)&SPI_TASK_STK[SPI_STK_SIZE-1],SPI_TASK_PRIO);						   
-	OSTaskSuspend(START_TASK_PRIO);	//¹ÒÆğÆğÊ¼ÈÎÎñ.
-	OS_EXIT_CRITICAL();				//ÍË³öÁÙ½çÇø(¿ÉÒÔ±»ÖĞ¶Ï´ò¶Ï)
+	OSTaskSuspend(START_TASK_PRIO);	//æŒ‚èµ·èµ·å§‹ä»»åŠ¡.
+	OS_EXIT_CRITICAL();				//é€€å‡ºä¸´ç•ŒåŒº(å¯ä»¥è¢«ä¸­æ–­æ‰“æ–­)
 } 
 
-//LED0ÈÎÎñ
+//LED0ä»»åŠ¡
 void led0_task(void *pdata)
 {	 	
 	while(1)
@@ -97,12 +96,22 @@ void spi_task(void *pdata)
 		/* One time transmission */
 		ADIS_Read11AxisData(&testImu);
 		ADIS_Raw2Data(&testImuTrue, &testImu);
+		/* FIXME: change print to a peoceduree, add the message in a queue tail. */
 		printf("%d,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f\r\n",\
 			OSTime,testImuTrue.gyro[0],testImuTrue.gyro[1],testImuTrue.gyro[2],testImuTrue.accl[0],testImuTrue.accl[1],\
 			testImuTrue.accl[2],testImuTrue.magn[0],testImuTrue.magn[1],testImuTrue.magn[2],testImuTrue.baro,testImuTrue.temp);
-		OSTimeDly(50);
+		OSTimeDly(49);
 	}
 }
 
+void sd_write_task(void *pdata)
+{
+	/* Init SD card module */
+	while(1)
+	{
+		/* using a queue, when queue is not empty always write */
+		
+	}
+}
 
 

@@ -5,16 +5,15 @@
 			"path": "."
 		}
 	],
-    "settings": 
+    "settings":
     {
-        "sublimeclang_options":
+        "ecc_common_flags": 
         [
             "-Wall",
             "-DSTM32F40_41xxx",
             "-DUSE_STDPERIPH_DRIVER",
-            //"-IC:\\Keil_v5\\ARM\\ARMCC\\include",
-            // "-IC:\\Program Files (x86)\\Microsoft Visual Studio 12.0\\VC\\include",
-            "-I${folder:${project_path:demo.sublime-project}}\\**"
-        ]
+            "-ISYSTEM/sys/*"
+        ],
+        "easy_clang_complete_verbose": true
     }
 }
