@@ -6,6 +6,11 @@
 #include "adis16488.h"
 #include "interface.h"
 #include "dma.h"
+#include "sdio_sdcard.h" 
+#include "ff.h"  
+
+u8 exf_getfree(u8 *drv,u32 *total,u32 *free);
+
 /////////////////////////UCOSII任务设置///////////////////////////////////
 /**************************************************/
 //START 任务
@@ -107,11 +112,66 @@ void spi_task(void *pdata)
 void sd_write_task(void *pdata)
 {
 	/* Init SD card module */
+	//Fatfs object
+	FATFS FatFs;
+	//File object
+	FIL fil;
+	//Free and total space
+	uint32_t total, free;
+	SD_Init();
+	//Mount drive
+	if (f_mount(&FatFs, "0:", 1) == FR_OK) {
+		//Mounted OK, turn on RED LED
+		
+		//Try to open file
+		if (f_open(&fil, "0:/1stfile.txt", FA_OPEN_ALWAYS | FA_READ | FA_WRITE) == FR_OK) 
+		{
+			//File opened, turn off RED and turn on GREEN led
+			
+			//If we put more than 0 characters (everything OK)
+			if (f_puts("First string in my file\n", &fil) > 0) 
+			{
+				if (exf_getfree((u8 *)"0",&total, &free) == FR_OK) 
+				{
+					//Data for drive size are valid
+				}
+				//Turn on both leds
+			}
+			
+			//Close file, don't forget this!
+			f_close(&fil);
+		}
+		
+		//Unmount drive, don't forget this!
+		f_mount(0, "", 1);
+	}
 	while(1)
 	{
 		/* using a queue, when queue is not empty always write */
 		
 	}
 }
+
+
+u8 exf_getfree(u8 *drv,u32 *total,u32 *free)
+{
+	FATFS *fs1;
+	u8 res;
+    u32 fre_clust=0, fre_sect=0, tot_sect=0;
+    //得到磁盘信息及空闲簇数量
+    res =(u32)f_getfree((const TCHAR*)drv, (DWORD*)&fre_clust, &fs1);
+    if(res==0)
+	{											   
+	    tot_sect=(fs1->n_fatent-2)*fs1->csize;	//得到总扇区数
+	    fre_sect=fre_clust*fs1->csize;			//得到空闲扇区数	   
+#if _MAX_SS!=512				  				//扇区大小不是512字节,则转换为512字节
+		tot_sect*=fs1->ssize/512;
+		fre_sect*=fs1->ssize/512;
+#endif	  
+		*total=tot_sect>>1;	//单位为KB
+		*free=fre_sect>>1;	//单位为KB 
+ 	}
+	return res;
+}	
 
 
