@@ -6,8 +6,12 @@
 #include "adis16488.h"
 #include "interface.h"
 #include "dma.h"
+// sdio fatfs
 #include "sdio_sdcard.h" 
 #include "ff.h"  
+
+// queue
+#include "queue.h"
 
 u8 exf_getfree(u8 *drv,u32 *total,u32 *free);
 
@@ -51,6 +55,9 @@ void sd_write_task(void *pdata);
 
 #define SEND_BUF_SIZE 200
 u8 SendBuff[SEND_BUF_SIZE]={0};
+extern char fifo_buffer[QUEUE_SIZE][MSG_LENGTH];
+extern Queue_Info fifo_info;
+OS_EVENT * fifo_lock;
 
 int main(void)
 { 
@@ -58,6 +65,8 @@ int main(void)
 	delay_init(168);		  //初始化延时函数
 	LED0_Init();		        //初始化LED端口 
 	uart_init(921600);
+	fifo_lock = OSSemCreate(1);
+	queue_init(&fifo_info);
 //	MYDMA_Config(DMA2_Stream7,DMA_Channel_4,(u32)&USART1->DR,(u32)SendBuff, SEND_BUF_SIZE);
 	OSInit();   
  	OSTaskCreate(start_task,(void *)0,(OS_STK *)&START_TASK_STK[START_STK_SIZE-1],START_TASK_PRIO );//创建起始任务
@@ -90,22 +99,34 @@ void led0_task(void *pdata)
 }
 u16 DeviceID=0;
 u32 data;
+
 void spi_task(void *pdata)
 {
 	/* Init Spi */
+	INT8U error;
+	u32 currentTime;
 	IMU_Data_Raw testImu;
 	IMU_Data testImuTrue;
 	ADISInit();
+	
 	/* Do spi transmission */
 	while(1)
 	{
 		/* One time transmission */
+		currentTime = OSTime;
 		ADIS_Read11AxisData(&testImu);
 		ADIS_Raw2Data(&testImuTrue, &testImu);
-		/* FIXME: change print to a peoceduree, add the message in a queue tail. */
-//		printf("%d,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f\r\n",\
-//			OSTime,testImuTrue.gyro[0],testImuTrue.gyro[1],testImuTrue.gyro[2],testImuTrue.accl[0],testImuTrue.accl[1],\
-//			testImuTrue.accl[2],testImuTrue.magn[0],testImuTrue.magn[1],testImuTrue.magn[2],testImuTrue.baro,testImuTrue.temp);
+		/* add the message in a queue tail. */		
+		// 1' 字符串 输入到buffer
+		sprintf(fifo_buffer[fifo_info.tail],"%d,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f\r\n",\
+			currentTime,testImuTrue.gyro[0],testImuTrue.gyro[1],testImuTrue.gyro[2],testImuTrue.accl[0],testImuTrue.accl[1],\
+			testImuTrue.accl[2],testImuTrue.magn[0],testImuTrue.magn[1],testImuTrue.magn[2],testImuTrue.baro,testImuTrue.temp);
+		// 2.0' 信号量 开始锁住
+		OSSemPend(fifo_lock,0,&error);
+		// 2' 队列加入一个数
+		queue_in(&fifo_info);
+		// 3' 信号量开始解锁
+		OSSemPost(fifo_lock);
 		OSTimeDly(49);
 	}
 }
@@ -113,46 +134,72 @@ void spi_task(void *pdata)
 void sd_write_task(void *pdata)
 {
 	/* Init SD card module */
+	INT8U error;
 	//Fatfs object
 	FATFS FatFs;
 	//File object
 	FIL fil;
 	//Free and total space
-	uint32_t total, free;
-	int n = 10000;
+//	uint32_t total, free;	
+	int key_val;
 	FRESULT res;
-	SD_Init();
-	//Mount drive
-	res = f_mount(&FatFs, "0:", 1);
-	if (res == FR_OK) 
-	{
-		//Mounted OK, turn on RED LED
-		
-		//Try to open file
-		res = f_open(&fil, "0:/rec.txt", FA_OPEN_ALWAYS | FA_READ | FA_WRITE);
-		if (res == FR_OK) 
-		{
-			//File opened, turn off RED and turn on GREEN led
-			
-			//If we put more than 0 characters (everything OK)
-			while(n--)
-			{
-				f_printf(&fil, "%d\t", OSTime);
-				f_puts("First string in my file\r\n", &fil);
-			}
-			
-			//Close file, don't forget this!
-			f_close(&fil);
-		}
-		
-		//Unmount drive, don't forget this!
-		f_mount(0, "", 1);
-	}
-	LED0=0;
+	u32 currentTime;
+	
 	while(1)
 	{
 		/* using a queue, when queue is not empty always write */
-		
+		// TODO: 1' 当按键按下时，开始挂载SD卡
+		switch (key_val)
+		{
+			case 0: // 按键没有按下
+				OSTimeDly(200); // 再经过20 ms进行按键检测
+				break;
+			case 1: // 按键已经按下了
+				// 初始化SD卡
+				SD_Init();
+				// 挂载SD卡
+				res = f_mount(&FatFs, "0:", 1);
+				if (res == FR_OK) 
+				{
+					// FIXME: 挂载 OK， 加入信号提示
+					// FIXME: 打开文件(读写模式，写入的时候会覆盖原始的数据)
+					// 进行文件的检测，创建一个新的文件名，避免覆盖之前的文件
+					res = f_open(&fil, "0:/001.txt", FA_OPEN_ALWAYS | FA_READ | FA_WRITE);
+					if (res == FR_OK) 
+					{
+						// FIXME: 文件打开，给一个信号指示
+						// 开始写入数据				
+						while(1)
+						{
+							/* 进行数据的写入 */
+							// 写之前进行 检测，队列是否为空, 若队列为空，则进行5ms等待
+							while (queue_is_empty(&fifo_info)){OSTimeDly(50);};
+							// 写数据
+							currentTime = OSTime;
+							f_printf(&fil,"%d---%s",currentTime,fifo_buffer[fifo_info.head]);
+							// 0' 信号量 锁定检测，并锁定信号量
+							OSSemPend(fifo_lock,0,&error);
+							queue_out(&fifo_info);
+							OSSemPost(fifo_lock);
+							// 9' 信号量解锁
+							// TODO: 进行按键的检测
+							if (key_val==1)
+							{// 若是按键按下则退出while(1)循环
+								break;
+							}
+							
+						}
+						//Close file, don't forget this!
+						f_close(&fil);
+					}
+					
+					//Unmount drive, don't forget this!
+					f_mount(0, "0:", 1);
+				}
+				break;
+			default:
+				break;
+		}
 	}
 }
 
