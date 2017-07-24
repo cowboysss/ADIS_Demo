@@ -70,8 +70,9 @@ void start_task(void *pdata)
   OS_CPU_SR cpu_sr=0;
 	pdata = pdata; 
   OS_ENTER_CRITICAL();			//进入临界区(无法被中断打断)    
- 	OSTaskCreate(led0_task,(void *)0,(OS_STK*)&LED0_TASK_STK[LED0_STK_SIZE-1],LED0_TASK_PRIO);						   
- 	OSTaskCreate(spi_task,(void *)0,(OS_STK*)&SPI_TASK_STK[SPI_STK_SIZE-1],SPI_TASK_PRIO);						   
+// 	OSTaskCreate(led0_task,(void *)0,(OS_STK*)&LED0_TASK_STK[LED0_STK_SIZE-1],LED0_TASK_PRIO);						   
+// 	OSTaskCreate(spi_task,(void *)0,(OS_STK*)&SPI_TASK_STK[SPI_STK_SIZE-1],SPI_TASK_PRIO);		
+	OSTaskCreate(sd_write_task,(void *)0,(OS_STK*)&SDWRITE_TASK_STK[LED0_STK_SIZE-1],SDWRITE_TASK_PRIO);		
 	OSTaskSuspend(START_TASK_PRIO);	//挂起起始任务.
 	OS_EXIT_CRITICAL();				//退出临界区(可以被中断打断)
 } 
@@ -102,9 +103,9 @@ void spi_task(void *pdata)
 		ADIS_Read11AxisData(&testImu);
 		ADIS_Raw2Data(&testImuTrue, &testImu);
 		/* FIXME: change print to a peoceduree, add the message in a queue tail. */
-		printf("%d,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f\r\n",\
-			OSTime,testImuTrue.gyro[0],testImuTrue.gyro[1],testImuTrue.gyro[2],testImuTrue.accl[0],testImuTrue.accl[1],\
-			testImuTrue.accl[2],testImuTrue.magn[0],testImuTrue.magn[1],testImuTrue.magn[2],testImuTrue.baro,testImuTrue.temp);
+//		printf("%d,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f\r\n",\
+//			OSTime,testImuTrue.gyro[0],testImuTrue.gyro[1],testImuTrue.gyro[2],testImuTrue.accl[0],testImuTrue.accl[1],\
+//			testImuTrue.accl[2],testImuTrue.magn[0],testImuTrue.magn[1],testImuTrue.magn[2],testImuTrue.baro,testImuTrue.temp);
 		OSTimeDly(49);
 	}
 }
@@ -118,24 +119,26 @@ void sd_write_task(void *pdata)
 	FIL fil;
 	//Free and total space
 	uint32_t total, free;
+	int n = 10000;
+	FRESULT res;
 	SD_Init();
 	//Mount drive
-	if (f_mount(&FatFs, "0:", 1) == FR_OK) {
+	res = f_mount(&FatFs, "0:", 1);
+	if (res == FR_OK) 
+	{
 		//Mounted OK, turn on RED LED
 		
 		//Try to open file
-		if (f_open(&fil, "0:/1stfile.txt", FA_OPEN_ALWAYS | FA_READ | FA_WRITE) == FR_OK) 
+		res = f_open(&fil, "0:/rec.txt", FA_OPEN_ALWAYS | FA_READ | FA_WRITE);
+		if (res == FR_OK) 
 		{
 			//File opened, turn off RED and turn on GREEN led
 			
 			//If we put more than 0 characters (everything OK)
-			if (f_puts("First string in my file\n", &fil) > 0) 
+			while(n--)
 			{
-				if (exf_getfree((u8 *)"0",&total, &free) == FR_OK) 
-				{
-					//Data for drive size are valid
-				}
-				//Turn on both leds
+				f_printf(&fil, "%d\t", OSTime);
+				f_puts("First string in my file\r\n", &fil);
 			}
 			
 			//Close file, don't forget this!
@@ -145,6 +148,7 @@ void sd_write_task(void *pdata)
 		//Unmount drive, don't forget this!
 		f_mount(0, "", 1);
 	}
+	LED0=0;
 	while(1)
 	{
 		/* using a queue, when queue is not empty always write */

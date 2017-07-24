@@ -137,7 +137,7 @@
           </Flash1>
           <bUseTDR>1</bUseTDR>
           <Flash2>BIN\UL2CM3.DLL</Flash2>
-          <Flash3></Flash3>
+          <Flash3>"" ()</Flash3>
           <Flash4></Flash4>
           <pFcarmOut></pFcarmOut>
           <pFcarmGrp></pFcarmGrp>
@@ -768,11 +768,6 @@
               <FileName>integer.h</FileName>
               <FileType>5</FileType>
               <FilePath>..\FATFS\src\integer.h</FilePath>
-            </File>
-            <File>
-              <FileName>cc936.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\FATFS\src\option\cc936.c</FilePath>
             </File>
             <File>
               <FileName>syscall.c</FileName>
