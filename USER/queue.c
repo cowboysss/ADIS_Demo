@@ -54,7 +54,7 @@ int queue_is_full(Queue_Info *f_fifoInfo)
 
 int queue_is_empty(Queue_Info *f_fifoInfo)
 {
-	if (f_fifoInfo->count == QUEUE_SIZE)
+	if (f_fifoInfo->count == 0)
 	{
 		// queue is empty
 		return 1;

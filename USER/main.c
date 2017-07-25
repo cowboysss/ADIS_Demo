@@ -12,6 +12,9 @@
 
 // queue
 #include "queue.h"
+// key
+#include "key_press.h"
+
 
 u8 exf_getfree(u8 *drv,u32 *total,u32 *free);
 
@@ -19,7 +22,7 @@ u8 exf_getfree(u8 *drv,u32 *total,u32 *free);
 /**************************************************/
 //START 任务
 //设置任务优先级
-#define START_TASK_PRIO      			6 //开始任务的优先级设置为最低
+#define START_TASK_PRIO      			60 //开始任务的优先级设置为最低
 //设置任务堆栈大小
 #define START_STK_SIZE  				64
 //任务堆栈	
@@ -29,25 +32,25 @@ void start_task(void *pdata);
 /**************************************************/               			   
 //LED0任务
 //设置任务优先级
-#define LED0_TASK_PRIO       			10 
+#define LED0_TASK_PRIO       			7 
 //设置任务堆栈大小
-#define LED0_STK_SIZE  		    		128
+#define LED0_STK_SIZE  		    		4096
 //任务堆栈	
 OS_STK LED0_TASK_STK[LED0_STK_SIZE];
 //任务函数
 void led0_task(void *pdata);
 /**************************************************/
-#define SPI_TASK_PRIO       			8 
+#define SPI_TASK_PRIO       			6 
 //设置任务堆栈大小
-#define SPI_STK_SIZE  					256
+#define SPI_STK_SIZE  					4096
 //任务堆栈
 OS_STK SPI_TASK_STK[SPI_STK_SIZE];
 //任务函数
 void spi_task(void *pdata);
 /**************************************************/
-#define SDWRITE_TASK_PRIO       			40 
+#define SDWRITE_TASK_PRIO       			11 
 //设置任务堆栈大小
-#define SDWRITE_STK_SIZE  					256
+#define SDWRITE_STK_SIZE  					4096
 //任务堆栈
 OS_STK SDWRITE_TASK_STK[SDWRITE_STK_SIZE];
 //任务函数
@@ -61,7 +64,7 @@ OS_EVENT * fifo_lock;
 
 int main(void)
 { 
- 
+	key_sdWrite();
 	delay_init(168);		  //初始化延时函数
 	LED0_Init();		        //初始化LED端口 
 	uart_init(921600);
@@ -79,8 +82,8 @@ void start_task(void *pdata)
   OS_CPU_SR cpu_sr=0;
 	pdata = pdata; 
   OS_ENTER_CRITICAL();			//进入临界区(无法被中断打断)    
-// 	OSTaskCreate(led0_task,(void *)0,(OS_STK*)&LED0_TASK_STK[LED0_STK_SIZE-1],LED0_TASK_PRIO);						   
-// 	OSTaskCreate(spi_task,(void *)0,(OS_STK*)&SPI_TASK_STK[SPI_STK_SIZE-1],SPI_TASK_PRIO);		
+ 	OSTaskCreate(led0_task,(void *)0,(OS_STK*)&LED0_TASK_STK[LED0_STK_SIZE-1],LED0_TASK_PRIO);						   
+ 	OSTaskCreate(spi_task,(void *)0,(OS_STK*)&SPI_TASK_STK[SPI_STK_SIZE-1],SPI_TASK_PRIO);		
 	OSTaskCreate(sd_write_task,(void *)0,(OS_STK*)&SDWRITE_TASK_STK[LED0_STK_SIZE-1],SDWRITE_TASK_PRIO);		
 	OSTaskSuspend(START_TASK_PRIO);	//挂起起始任务.
 	OS_EXIT_CRITICAL();				//退出临界区(可以被中断打断)
@@ -99,7 +102,7 @@ void led0_task(void *pdata)
 }
 u16 DeviceID=0;
 u32 data;
-
+u8 key_flag=0;
 void spi_task(void *pdata)
 {
 	/* Init Spi */
@@ -118,15 +121,18 @@ void spi_task(void *pdata)
 		ADIS_Raw2Data(&testImuTrue, &testImu);
 		/* add the message in a queue tail. */		
 		// 1' 字符串 输入到buffer
-		sprintf(fifo_buffer[fifo_info.tail],"%d,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f\r\n",\
+		if (key_flag)
+		{
+			sprintf(fifo_buffer[fifo_info.tail],"%d,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f\r\n",\
 			currentTime,testImuTrue.gyro[0],testImuTrue.gyro[1],testImuTrue.gyro[2],testImuTrue.accl[0],testImuTrue.accl[1],\
 			testImuTrue.accl[2],testImuTrue.magn[0],testImuTrue.magn[1],testImuTrue.magn[2],testImuTrue.baro,testImuTrue.temp);
-		// 2.0' 信号量 开始锁住
-		OSSemPend(fifo_lock,0,&error);
-		// 2' 队列加入一个数
-		queue_in(&fifo_info);
-		// 3' 信号量开始解锁
-		OSSemPost(fifo_lock);
+			// 2.0' 信号量 开始锁住
+			OSSemPend(fifo_lock,0,&error);
+			// 2' 队列加入一个数
+			queue_in(&fifo_info);
+			// 3' 信号量开始解锁
+			OSSemPost(fifo_lock);
+		}
 		OSTimeDly(49);
 	}
 }
@@ -139,55 +145,78 @@ void sd_write_task(void *pdata)
 	FATFS FatFs;
 	//File object
 	FIL fil;
+	FILINFO t_filinfo;
 	//Free and total space
 //	uint32_t total, free;	
 	int key_val;
+	char savename[10];
 	FRESULT res;
 	u32 currentTime;
+	u8 file_index=0;
+	SD_Error sdError;
 	
 	while(1)
 	{
 		/* using a queue, when queue is not empty always write */
 		// TODO: 1' 当按键按下时，开始挂载SD卡
+		key_val = KEY0;
 		switch (key_val)
 		{
-			case 0: // 按键没有按下
+			case 1: // 按键没有按下
 				OSTimeDly(200); // 再经过20 ms进行按键检测
 				break;
-			case 1: // 按键已经按下了
+			case 0: // 按键已经按下了
 				// 初始化SD卡
-				SD_Init();
+				LED1 = 0;
+				OSTimeDly(2000);
+				sdError = SD_Init();
 				// 挂载SD卡
 				res = f_mount(&FatFs, "0:", 1);
 				if (res == FR_OK) 
 				{
-					// FIXME: 挂载 OK， 加入信号提示
+					// 挂载 OK， 加入信号提示
+					LED1 = 1;
 					// FIXME: 打开文件(读写模式，写入的时候会覆盖原始的数据)
 					// 进行文件的检测，创建一个新的文件名，避免覆盖之前的文件
-					res = f_open(&fil, "0:/001.txt", FA_OPEN_ALWAYS | FA_READ | FA_WRITE);
+					
+					while(1)
+					{
+						sprintf(savename,"0:/%03d.txt",file_index++);
+						res = f_stat(savename,&t_filinfo);
+						if (res==FR_NO_FILE)
+						{
+							break;
+						}
+					}
+					LED1 = 0;
+					res = f_open(&fil, savename, FA_OPEN_ALWAYS | FA_READ | FA_WRITE);
 					if (res == FR_OK) 
 					{
+						queue_init(&fifo_info);
+						key_flag=1;
 						// FIXME: 文件打开，给一个信号指示
 						// 开始写入数据				
 						while(1)
 						{
-							/* 进行数据的写入 */
-							// 写之前进行 检测，队列是否为空, 若队列为空，则进行5ms等待
-							while (queue_is_empty(&fifo_info)){OSTimeDly(50);};
-							// 写数据
+//							/* 进行数据的写入 */
+//							// 写之前进行 检测，队列是否为空, 若队列为空，则进行5ms等待
+							while (queue_is_empty(&fifo_info)){OSTimeDly(20);};
+//							// 写数据
 							currentTime = OSTime;
-							f_printf(&fil,"%d---%s",currentTime,fifo_buffer[fifo_info.head]);
-							// 0' 信号量 锁定检测，并锁定信号量
+							f_printf(&fil,"%d---%s",fifo_info.count,fifo_buffer[fifo_info.head]);
+//							// 0' 信号量 锁定检测，并锁定信号量
 							OSSemPend(fifo_lock,0,&error);
 							queue_out(&fifo_info);
 							OSSemPost(fifo_lock);
-							// 9' 信号量解锁
-							// TODO: 进行按键的检测
-							if (key_val==1)
+//							// 9' 信号量解锁
+							// 进行按键的检测
+							key_val = KEY0;
+							if (key_val==0)
 							{// 若是按键按下则退出while(1)循环
+								key_flag=0;
 								break;
 							}
-							
+							OSTimeDly(1);
 						}
 						//Close file, don't forget this!
 						f_close(&fil);
@@ -196,6 +225,8 @@ void sd_write_task(void *pdata)
 					//Unmount drive, don't forget this!
 					f_mount(0, "0:", 1);
 				}
+				LED1 = 1;
+				OSTimeDly(2000);
 				break;
 			default:
 				break;

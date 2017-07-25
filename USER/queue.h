@@ -1,7 +1,7 @@
 #ifndef MY__QUEUE__H
 #define MY__QUEUE__H
 
-#define QUEUE_SIZE 40
+#define QUEUE_SIZE 100
 #define MSG_LENGTH 800
 
 #include "sys.h"

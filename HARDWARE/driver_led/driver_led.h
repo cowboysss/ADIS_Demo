@@ -5,6 +5,7 @@
 #include "sys.h"
 //#define LED0 PEout(2)
 #define LED0 PFout(9)
+#define LED1 PFout(10)
 
 void LED0_Init(void);
 void LED0_On(void);
