@@ -71,7 +71,7 @@ u16 USART_RX_STA=0;       //接收状态标记
 //bound:波特率
 void uart_init(u32 bound){
    //GPIO端口设置
-  GPIO_InitTypeDef GPIO_InitStructure;
+	GPIO_InitTypeDef GPIO_InitStructure;
 	USART_InitTypeDef USART_InitStructure;
 	NVIC_InitTypeDef NVIC_InitStructure;
 	
@@ -97,9 +97,9 @@ void uart_init(u32 bound){
 	USART_InitStructure.USART_Parity = USART_Parity_No;//无奇偶校验位
 	USART_InitStructure.USART_HardwareFlowControl = USART_HardwareFlowControl_None;//无硬件数据流控制
 	USART_InitStructure.USART_Mode = USART_Mode_Rx | USART_Mode_Tx;	//收发模式
-  USART_Init(USART1, &USART_InitStructure); //初始化串口1
+	USART_Init(USART1, &USART_InitStructure); //初始化串口1
 	
-  USART_Cmd(USART1, ENABLE);  //使能串口1 
+	USART_Cmd(USART1, ENABLE);  //使能串口1 
 	
 	//USART_ClearFlag(USART1, USART_FLAG_TC);
 	
@@ -107,7 +107,7 @@ void uart_init(u32 bound){
 	USART_ITConfig(USART1, USART_IT_RXNE, ENABLE);//开启相关中断
 
 	//Usart1 NVIC 配置
-  NVIC_InitStructure.NVIC_IRQChannel = USART1_IRQn;//串口1中断通道
+	NVIC_InitStructure.NVIC_IRQChannel = USART1_IRQn;//串口1中断通道
 	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority=3;//抢占优先级3
 	NVIC_InitStructure.NVIC_IRQChannelSubPriority =3;		//子优先级3
 	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;			//IRQ通道使能
