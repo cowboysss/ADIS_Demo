@@ -269,10 +269,10 @@ void gps_sd_write_task(void *pdata)
 	SD_Error sdError;	
 	
 	// 延时10秒，等待GPS初始化完成
-	OSTimeDly(100000);
+//	OSTimeDly(100000);
 	for (comCnt = 0; comCnt <22;++comCnt)
 	{
-		USART_SendData(USART1, command[t]); //向串口 1 发送数据
+		USART_SendData(USART1, command[comCnt]); //向串口 1 发送数据
 		while(USART_GetFlagStatus(USART1,USART_FLAG_TC)!=SET);	
 	}
 	
@@ -326,14 +326,15 @@ void gps_sd_write_task(void *pdata)
 								// GPS接收完成
 								// 读取数据长度
 								len=USART_RX_STA&0x3fff;
-								for(t=0;t<len;t++)
-								{
+//								for(t=0;t<len;t++)
+//								{
 									// 写一个字节
-									f_write(&fil,(USART_RX_BUF+t),1,&reallen);
-									OSTimeDly(1);
-								}
+									f_write(&fil,USART_RX_BUF,len,&reallen);
+//									OSTimeDly(1);
+//								}
+								USART_RX_STA=0;
 								// 只写一次就退出
-								break;
+//								break;
 							}
 							// 进行按键的检测
 							key_val = KEY0;

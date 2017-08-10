@@ -1,8 +1,8 @@
 #ifndef MY__QUEUE__H
 #define MY__QUEUE__H
 
-#define QUEUE_SIZE 100
-#define MSG_LENGTH 800
+#define QUEUE_SIZE 10
+#define MSG_LENGTH 200
 
 #include "sys.h"
 typedef struct
