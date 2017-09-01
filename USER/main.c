@@ -179,25 +179,21 @@ void sd_write_task(void *pdata)
 {
 	/* Init SD card module */
 	INT8U error;
-	//Fatfs object
-	FATFS FatFs;
+
 	//File object
 	FIL fil;
 	FILINFO t_filinfo;
 	//Free and total space
-//	uint32_t total, free;	
-	int key_val;
 	char savename[10];
 	FRESULT res;
 	u32 currentTime;
 	u8 file_index=0;
-	SD_Error sdError;
 	
 	while(1)
 	{
 		/* using a queue, when queue is not empty always write */
 		// TODO: 1' 当按键按下时，开始挂载SD卡
-		if (key_value == PRESSED_OPEN || key_value == GPS_USED_OPEN)
+		if (key_value == PRESSED_OPEN)
 		{
 //			LED1 = 1;
 			// 按键按下，需要IMU进行运算处理
@@ -238,7 +234,7 @@ void sd_write_task(void *pdata)
 					OSSemPost(fifo_lock);
 					// 9' 信号量解锁
 					// 退出写模式检测
-					if (key_value == PRESSED_CLOSE || key_value == GPS_USED_CLOSE)
+					if (key_value == PRESSED_CLOSE)
 					{
 						// 若是按键按下则退出while(1)循环
 						imu_use_flag = 1;
@@ -265,9 +261,6 @@ void gps_sd_write_task(void *pdata)
 	UINT reallen;
 	char command[22]="LOG RANGEA ONTIME 1\r\n";
 	u8 comCnt = 0;
-	/* Init SD card module */
-	INT8U error;
-
 	//File object
 	FIL fil;
 	FILINFO t_filinfo;
@@ -277,7 +270,6 @@ void gps_sd_write_task(void *pdata)
 	FRESULT res;
 	u32 currentTime;
 	u8 file_index=0;
-	SD_Error sdError;	
 	
 	// 延时10秒，等待GPS初始化完成
 //	OSTimeDly(100000);
@@ -291,7 +283,7 @@ void gps_sd_write_task(void *pdata)
 	{
 		/* using a queue, when queue is not empty always write */
 		// TODO: 1' 当按键按下时，开始挂载SD卡
-		if (key_value == PRESSED_OPEN || key_value == IMU_USED_OPEN)
+		if (key_value == PRESSED_OPEN)
 		{
 			// 按键按下，需要IMU进行运算处理
 			gps_use_flag = 1;
@@ -317,6 +309,7 @@ void gps_sd_write_task(void *pdata)
 				while(1)
 				{
 					OSTimeDly(2000); 
+					f_write(&fil,"TestGPS",7,&reallen);
 //					// 开始判断是否接收完成
 //					// 写GPS数据时每写多少个字节就要OSTimeDly(1)一次
 //					if(USART_RX_STA&0x8000)
@@ -337,8 +330,9 @@ void gps_sd_write_task(void *pdata)
 //						USART_RX_STA=0;
 //					}
 					// 退出写模式检测
-					if (key_value == PRESSED_CLOSE || key_value == IMU_USED_CLOSE)
-					{// 若是按键按下则退出while(1)循环
+					if (key_value == PRESSED_CLOSE)
+					{
+						// 若是按键按下则退出while(1)循环
 						gps_use_flag = 1;
 						break;
 					}
@@ -401,34 +395,14 @@ void keyscan_task(void *pdata)
 				}
 				break;
 			case PRESSED_OPEN:
-				if (imu_use_flag)
+				if (imu_use_flag && gps_use_flag)
 				{
-					key_value = IMU_USED_OPEN; //IMU_USED
+					key_value = OPENED; //IMU_USED
 					imu_use_flag = 0;
-					break;
-				}
-				if (gps_use_flag)
-				{
-					key_value = GPS_USED_OPEN; //GPS_USED
 					gps_use_flag = 0;
-					break;
 				}
 				break;
 				
-			case IMU_USED_OPEN:
-				if (gps_use_flag)
-				{
-					key_value = OPENED;
-					gps_use_flag = 0;
-				}
-				break;
-			case GPS_USED_OPEN:
-				if (imu_use_flag)
-				{
-					key_value = OPENED;
-					imu_use_flag = 0;
-				}
-				break;
 			case OPENED:
 				value = KEY0;
 				if (!value) // key is pressed
@@ -437,34 +411,14 @@ void keyscan_task(void *pdata)
 				}
 				break;
 			case PRESSED_CLOSE:
-				if (imu_use_flag)
+				if (imu_use_flag && gps_use_flag)
 				{
-					key_value = IMU_USED_CLOSE; //IMU_USED
+					key_value = CLOSED; //IMU_USED
 					imu_use_flag = 0;
-					break;
-				}
-				if (gps_use_flag)
-				{
-					key_value = GPS_USED_CLOSE; //GPS_USED
 					gps_use_flag = 0;
-					break;
 				}
 				break;
 				
-			case IMU_USED_CLOSE:
-				if (gps_use_flag)
-				{
-					key_value = CLOSED;
-					gps_use_flag = 0;
-				}
-				break;
-			case GPS_USED_CLOSE:
-				if (imu_use_flag)
-				{
-					key_value = CLOSED;
-					imu_use_flag = 0;
-				}
-				break;
 			default:
 				break;
 		}
