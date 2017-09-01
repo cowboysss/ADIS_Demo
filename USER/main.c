@@ -32,7 +32,7 @@ void start_task(void *pdata);
 /**************************************************/               			   
 //LED0任务
 //设置任务优先级
-#define LED0_TASK_PRIO       			7 
+#define LED0_TASK_PRIO       			8 
 //设置任务堆栈大小
 #define LED0_STK_SIZE  		    		4096
 //任务堆栈	
@@ -56,13 +56,33 @@ OS_STK SDWRITE_TASK_STK[SDWRITE_STK_SIZE];
 //任务函数
 void sd_write_task(void *pdata);
 /**************************************************/
-#define GPSSDWRITE_TASK_PRIO       			12
+#define GPSSDWRITE_TASK_PRIO       			15
 //设置任务堆栈大小
 #define GPSSDWRITE_STK_SIZE  				4096
 //任务堆栈
 OS_STK GPSSDWRITE_TASK_STK[GPSSDWRITE_STK_SIZE];
 //任务函数
 void gps_sd_write_task(void *pdata);
+/**************************************************/
+#define KEYSCAN_TASK_PRIO       			7
+//设置任务堆栈大小
+#define KEYSCAN_STK_SIZE  				256
+//任务堆栈
+OS_STK KEYSCAN_TASK_STK[KEYSCAN_STK_SIZE];
+//任务函数
+void keyscan_task(void *pdata);
+
+typedef enum
+{
+	UNPRESSED = 0,
+	PRESSED = 1,
+	IMU_USED = 2,
+	GPS_USED = 3,
+}KEY_STATUS;
+
+KEY_STATUS key_value=UNPRESSED;
+u8 imu_use_flag = 0;
+u8 gps_use_flag = 0;
 
 
 #define SEND_BUF_SIZE 200
@@ -92,9 +112,10 @@ void start_task(void *pdata)
 	pdata = pdata; 
   OS_ENTER_CRITICAL();			//进入临界区(无法被中断打断)    
  	OSTaskCreate(led0_task,(void *)0,(OS_STK*)&LED0_TASK_STK[LED0_STK_SIZE-1],LED0_TASK_PRIO);						   
-// 	OSTaskCreate(spi_task,(void *)0,(OS_STK*)&SPI_TASK_STK[SPI_STK_SIZE-1],SPI_TASK_PRIO);		
-//	OSTaskCreate(sd_write_task,(void *)0,(OS_STK*)&SDWRITE_TASK_STK[SDWRITE_STK_SIZE-1],SDWRITE_TASK_PRIO);		
+ 	OSTaskCreate(spi_task,(void *)0,(OS_STK*)&SPI_TASK_STK[SPI_STK_SIZE-1],SPI_TASK_PRIO);		
+	OSTaskCreate(sd_write_task,(void *)0,(OS_STK*)&SDWRITE_TASK_STK[SDWRITE_STK_SIZE-1],SDWRITE_TASK_PRIO);		
 	OSTaskCreate(gps_sd_write_task,(void *)0,(OS_STK*)&GPSSDWRITE_TASK_STK[GPSSDWRITE_STK_SIZE-1],GPSSDWRITE_TASK_PRIO);		
+	OSTaskCreate(keyscan_task,(void *)0,(OS_STK*)&KEYSCAN_TASK_STK[KEYSCAN_STK_SIZE-1],KEYSCAN_TASK_PRIO);		
 
 	OSTaskSuspend(START_TASK_PRIO);	//挂起起始任务.
 	OS_EXIT_CRITICAL();				//退出临界区(可以被中断打断)
@@ -192,7 +213,7 @@ void sd_write_task(void *pdata)
 					
 					while(1)
 					{
-						sprintf(savename,"0:/%03d.txt",file_index++);
+						sprintf(savename,"0:/%03d-IMU.txt",file_index++);
 						res = f_stat(savename,&t_filinfo);
 						if (res==FR_NO_FILE)
 						{
@@ -248,6 +269,7 @@ void sd_write_task(void *pdata)
 void gps_sd_write_task(void *pdata)
 {
 	u16 len = 0;
+	u16 last_pack_len = 0;
 	u16 t = 0;
 	UINT reallen;
 	char command[22]="LOG RANGEA ONTIME 1\r\n";
@@ -302,7 +324,7 @@ void gps_sd_write_task(void *pdata)
 					
 					while(1)
 					{
-						sprintf(savename,"0:/%03d.txt",file_index++);
+						sprintf(savename,"0:/%03d-GPS.txt",file_index++);
 						res = f_stat(savename,&t_filinfo);
 						if (res==FR_NO_FILE)
 						{
@@ -326,12 +348,16 @@ void gps_sd_write_task(void *pdata)
 								// GPS接收完成
 								// 读取数据长度
 								len=USART_RX_STA&0x3fff;
-//								for(t=0;t<len;t++)
-//								{
-									// 写一个字节
-									f_write(&fil,USART_RX_BUF,len,&reallen);
-//									OSTimeDly(1);
-//								}
+								last_pack_len = len%100;
+								len -= last_pack_len; 
+								for(t=0;t<len;t+=100)
+								{
+									// 写10个字节，目的防止该任务一直占用资源，每写10个字节就Dly0.1ms
+									// 缺点：会增加GPS数据写的时间。
+									f_write(&fil,USART_RX_BUF+t,100,&reallen); 
+									OSTimeDly(1);
+								}
+								f_write(&fil,USART_RX_BUF+t,last_pack_len,&reallen); 
 								USART_RX_STA=0;
 								// 只写一次就退出
 //								break;
@@ -362,6 +388,57 @@ void gps_sd_write_task(void *pdata)
 	
 }
 
+// key scan task
+void keyscan_task(void *pdata)
+{
+	int value;
+	while(1)
+	{
+		switch(key_value)
+		{
+			case UNPRESSED:
+				value = KEY0;
+				if (value) // key is not pressed
+				{
+				}
+				else // key is pressed
+				{
+					key_value = PRESSED;
+				}
+				break;
+			case PRESSED:
+				if (imu_use_flag)
+				{
+					key_value = IMU_USED;
+					imu_use_flag = 0;
+				}
+				if (gps_use_flag)
+				{
+					key_value = GPS_USED;
+					gps_use_flag = 0;
+				}
+				break;
+				
+			case IMU_USED:
+				if (gps_use_flag)
+				{
+					key_value = UNPRESSED;
+					gps_use_flag = 0;
+				}
+				break;
+			case GPS_USED:
+				if (imu_use_flag)
+				{
+					key_value = UNPRESSED;
+					imu_use_flag = 0;
+				}
+				break;
+			default:
+				break;
+		}
+		OSTimeDly(200); //延时20ms
+	}
+}
 
 
 u8 exf_getfree(u8 *drv,u32 *total,u32 *free)
