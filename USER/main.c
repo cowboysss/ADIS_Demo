@@ -74,15 +74,21 @@ void keyscan_task(void *pdata);
 
 typedef enum
 {
-	UNPRESSED = 0,
-	PRESSED = 1,
-	IMU_USED = 2,
-	GPS_USED = 3,
+	UNPRESSED,
+	PRESSED,
+	CLOSED,
+	PRESSED_OPEN,
+	IMU_USED_OPEN,
+	GPS_USED_OPEN,
+	OPENED,
+	PRESSED_CLOSE,
+	IMU_USED_CLOSE,
+	GPS_USED_CLOSE
 }KEY_STATUS;
 
-KEY_STATUS key_value=UNPRESSED;
-u8 imu_use_flag = 0;
-u8 gps_use_flag = 0;
+KEY_STATUS key_value=CLOSED;
+volatile u8 imu_use_flag = 0;
+volatile u8 gps_use_flag = 0;
 
 
 #define SEND_BUF_SIZE 200
@@ -111,7 +117,7 @@ void start_task(void *pdata)
   OS_CPU_SR cpu_sr=0;
 	pdata = pdata; 
   OS_ENTER_CRITICAL();			//进入临界区(无法被中断打断)    
- 	OSTaskCreate(led0_task,(void *)0,(OS_STK*)&LED0_TASK_STK[LED0_STK_SIZE-1],LED0_TASK_PRIO);						   
+// 	OSTaskCreate(led0_task,(void *)0,(OS_STK*)&LED0_TASK_STK[LED0_STK_SIZE-1],LED0_TASK_PRIO);						   
  	OSTaskCreate(spi_task,(void *)0,(OS_STK*)&SPI_TASK_STK[SPI_STK_SIZE-1],SPI_TASK_PRIO);		
 	OSTaskCreate(sd_write_task,(void *)0,(OS_STK*)&SDWRITE_TASK_STK[SDWRITE_STK_SIZE-1],SDWRITE_TASK_PRIO);		
 	OSTaskCreate(gps_sd_write_task,(void *)0,(OS_STK*)&GPSSDWRITE_TASK_STK[GPSSDWRITE_STK_SIZE-1],GPSSDWRITE_TASK_PRIO);		
@@ -143,7 +149,7 @@ void spi_task(void *pdata)
 	IMU_Data_Raw testImu;
 	IMU_Data testImuTrue;
 	ADISInit();
-	
+	PBout(14)=0;
 	/* Do spi transmission */
 	while(1)
 	{
@@ -191,78 +197,63 @@ void sd_write_task(void *pdata)
 	{
 		/* using a queue, when queue is not empty always write */
 		// TODO: 1' 当按键按下时，开始挂载SD卡
-		key_val = KEY0;
-		switch (key_val)
+		if (key_value == PRESSED_OPEN || key_value == GPS_USED_OPEN)
 		{
-			case 1: // 按键没有按下
-				OSTimeDly(200); // 再经过20 ms进行按键检测
-				break;
-			case 0: // 按键已经按下了
-				// 初始化SD卡
-				LED1 = 0;
-				OSTimeDly(2000);
-				sdError = SD_Init();
-				// 挂载SD卡
-				res = f_mount(&FatFs, "0:", 1);
-				if (res == FR_OK) 
+//			LED1 = 1;
+			// 按键按下，需要IMU进行运算处理
+			imu_use_flag = 1;
+			OSTimeDly(2000);
+			
+			// detecte the file is exist or not.
+			while(1)
+			{
+				sprintf(savename,"0:/%03d-IMU.txt",file_index++);
+				res = f_stat(savename,&t_filinfo);
+				if (res==FR_NO_FILE)
 				{
-					// 挂载 OK， 加入信号提示
-					LED1 = 1;
-					// FIXME: 打开文件(读写模式，写入的时候会覆盖原始的数据)
-					// 进行文件的检测，创建一个新的文件名，避免覆盖之前的文件
-					
-					while(1)
-					{
-						sprintf(savename,"0:/%03d-IMU.txt",file_index++);
-						res = f_stat(savename,&t_filinfo);
-						if (res==FR_NO_FILE)
-						{
-							break;
-						}
-					}
-					LED1 = 0;
-					res = f_open(&fil, savename, FA_OPEN_ALWAYS | FA_READ | FA_WRITE);
-					if (res == FR_OK) 
-					{
-						queue_init(&fifo_info);
-						key_flag=1;
-						// FIXME: 文件打开，给一个信号指示
-						// 开始写入数据				
-						while(1)
-						{
-//							/* 进行数据的写入 */
-//							// 写之前进行 检测，队列是否为空, 若队列为空，则进行5ms等待
-							while (queue_is_empty(&fifo_info)){OSTimeDly(20);};
-//							// 写数据
-							currentTime = OSTime;
-							f_printf(&fil,"%d---%s",fifo_info.count,fifo_buffer[fifo_info.head]);
-//							// 0' 信号量 锁定检测，并锁定信号量
-							OSSemPend(fifo_lock,0,&error);
-							queue_out(&fifo_info);
-							OSSemPost(fifo_lock);
-//							// 9' 信号量解锁
-							// 进行按键的检测
-							key_val = KEY0;
-							if (key_val==0)
-							{// 若是按键按下则退出while(1)循环
-								key_flag=0;
-								break;
-							}
-							OSTimeDly(1);
-						}
-						//Close file, don't forget this!
-						f_close(&fil);
-					}
-					
-					//Unmount drive, don't forget this!
-					f_mount(0, "0:", 1);
+					break;
 				}
-				LED1 = 1;
-				OSTimeDly(2000);
-				break;
-			default:
-				break;
+			}
+			// open file
+			res = f_open(&fil, savename, FA_OPEN_ALWAYS | FA_READ | FA_WRITE);
+			if (res == FR_OK) 
+			{
+				LED0=0;
+				// FIXME: 文件打开，给一个信号指示
+				// 开始写入数据			
+				queue_init(&fifo_info);
+				key_flag=1; // 用于SPI同步采集数据
+				
+				while(1)
+				{
+					/* 进行数据的写入 */
+					// 写之前进行 检测，队列是否为空, 若队列为空，则进行5ms等待
+					while (queue_is_empty(&fifo_info)){OSTimeDly(20);};
+					// 写数据
+					currentTime = OSTime;
+					f_printf(&fil,"%d---%s",fifo_info.count,fifo_buffer[fifo_info.head]);
+					// 0' 信号量 锁定检测，并锁定信号量
+					OSSemPend(fifo_lock,0,&error);
+					queue_out(&fifo_info);
+					OSSemPost(fifo_lock);
+					// 9' 信号量解锁
+					// 退出写模式检测
+					if (key_value == PRESSED_CLOSE || key_value == GPS_USED_CLOSE)
+					{
+						// 若是按键按下则退出while(1)循环
+						imu_use_flag = 1;
+						break;
+					}
+					OSTimeDly(1);
+				}
+				key_flag=0;
+				LED0=1;
+				//Close file, don't forget this!
+				f_close(&fil);
+			}
+			OSTimeDly(2000);
 		}
+		OSTimeDly(200); // 再经过20 ms进行按键检测
 	}
 }
 
@@ -276,14 +267,12 @@ void gps_sd_write_task(void *pdata)
 	u8 comCnt = 0;
 	/* Init SD card module */
 	INT8U error;
-	//Fatfs object
-	FATFS FatFs;
+
 	//File object
 	FIL fil;
 	FILINFO t_filinfo;
 	//Free and total space
 //	uint32_t total, free;	
-	int key_val;
 	char savename[10];
 	FRESULT res;
 	u32 currentTime;
@@ -302,134 +291,177 @@ void gps_sd_write_task(void *pdata)
 	{
 		/* using a queue, when queue is not empty always write */
 		// TODO: 1' 当按键按下时，开始挂载SD卡
-		key_val = KEY0;
-		switch (key_val)
+		if (key_value == PRESSED_OPEN || key_value == IMU_USED_OPEN)
 		{
-			case 1: // 按键没有按下
-				OSTimeDly(200); // 再经过20 ms进行按键检测
-				break;
-			case 0: // 按键已经按下了
-				// 初始化SD卡
-				LED1 = 0;
-				OSTimeDly(2000);
-				sdError = SD_Init();
-				// 挂载SD卡
-				res = f_mount(&FatFs, "0:", 1);
-				if (res == FR_OK) 
+			// 按键按下，需要IMU进行运算处理
+			gps_use_flag = 1;
+			OSTimeDly(2000);
+			
+			// detecte the file is exist or not.
+			while(1)
+			{
+				sprintf(savename,"0:/%03d-GPS.txt",file_index++);
+				res = f_stat(savename,&t_filinfo);
+				if (res==FR_NO_FILE)
 				{
-					// 挂载 OK， 加入信号提示
-					LED1 = 1;
-					// FIXME: 打开文件(读写模式，写入的时候会覆盖原始的数据)
-					// 进行文件的检测，创建一个新的文件名，避免覆盖之前的文件
-					
-					while(1)
-					{
-						sprintf(savename,"0:/%03d-GPS.txt",file_index++);
-						res = f_stat(savename,&t_filinfo);
-						if (res==FR_NO_FILE)
-						{
-							break;
-						}
-					}
-					LED1 = 0;
-					res = f_open(&fil, savename, FA_OPEN_ALWAYS | FA_READ | FA_WRITE);
-					if (res == FR_OK) 
-					{
-						queue_init(&fifo_info);
-						key_flag=1;
-						// FIXME: 文件打开，给一个信号指示
-						// 开始写入数据				
-						while(1)
-						{
-							// 开始判断是否接收完成
-							// 写GPS数据时每写多少个字节就要OSTimeDly(1)一次
-							if(USART_RX_STA&0x8000)
-							{
-								// GPS接收完成
-								// 读取数据长度
-								len=USART_RX_STA&0x3fff;
-								last_pack_len = len%100;
-								len -= last_pack_len; 
-								for(t=0;t<len;t+=100)
-								{
-									// 写10个字节，目的防止该任务一直占用资源，每写10个字节就Dly0.1ms
-									// 缺点：会增加GPS数据写的时间。
-									f_write(&fil,USART_RX_BUF+t,100,&reallen); 
-									OSTimeDly(1);
-								}
-								f_write(&fil,USART_RX_BUF+t,last_pack_len,&reallen); 
-								USART_RX_STA=0;
-								// 只写一次就退出
-//								break;
-							}
-							// 进行按键的检测
-							key_val = KEY0;
-							if (key_val==0)
-							{// 若是按键按下则退出while(1)循环
-								key_flag=0;
-								break;
-							}
-							OSTimeDly(1);
-						}
-						//Close file, don't forget this!
-						f_close(&fil);
-					}
-					
-					//Unmount drive, don't forget this!
-					f_mount(0, "0:", 1);
+					break;
 				}
+			}
+			// open file
+			res = f_open(&fil, savename, FA_OPEN_ALWAYS | FA_READ | FA_WRITE);
+			if (res == FR_OK) //FR_OK
+			{
 				LED1 = 1;
-				OSTimeDly(2000);
-				break;
-			default:
-				break;
+				// FIXME: 文件打开，给一个信号指示
+				// 开始写入数据				
+				while(1)
+				{
+					OSTimeDly(2000); 
+//					// 开始判断是否接收完成
+//					// 写GPS数据时每写多少个字节就要OSTimeDly(1)一次
+//					if(USART_RX_STA&0x8000)
+//					{
+//						// GPS接收完成
+//						// 读取数据长度
+//						len=USART_RX_STA&0x3fff;
+//						last_pack_len = len%100;
+//						len -= last_pack_len; 
+//						for(t=0;t<len;t+=100)
+//						{
+//							// 写10个字节，目的防止该任务一直占用资源，每写10个字节就Dly0.1ms
+//							// 缺点：会增加GPS数据写的时间。
+//							f_write(&fil,USART_RX_BUF+t,100,&reallen); 
+//							OSTimeDly(1);
+//						}
+//						f_write(&fil,USART_RX_BUF+t,last_pack_len,&reallen); 
+//						USART_RX_STA=0;
+//					}
+					// 退出写模式检测
+					if (key_value == PRESSED_CLOSE || key_value == IMU_USED_CLOSE)
+					{// 若是按键按下则退出while(1)循环
+						gps_use_flag = 1;
+						break;
+					}
+					OSTimeDly(1);
+				}
+				LED1 = 0;
+				//Close file, don't forget this!
+				f_close(&fil);
+			}
+			OSTimeDly(2000);
 		}
+		OSTimeDly(200); // 再经过20 ms进行按键检测
 	}
-	
 }
 
-// key scan task
+// key scan task	
+FATFS FatFs;
+
 void keyscan_task(void *pdata)
 {
-	int value;
+	int value,value2;
+	SD_Error sdError;
+	FRESULT res;
+	KEY_STATUS key2 = UNPRESSED;
 	while(1)
 	{
+		value2 = KEY1;
+		if (value2 == 0 && key2 == UNPRESSED)
+		{
+			sdError = SD_Init();
+			// 挂载SD卡
+			res = f_mount(&FatFs, "0:", 1);
+			if (res == FR_OK) 
+			{
+				// 挂载 OK亮灯
+				LED1 = 0;
+				key2 = PRESSED;
+			}
+			OSTimeDly(2000); //延时20ms
+		}
+		value2 = KEY1;
+		if (value2 == 0 && key2 == PRESSED)
+		{
+			//Unmount drive, don't forget this!
+			f_mount(0, "0:", 1);
+			// turn off the light
+			LED1 = 1;
+			key2 = UNPRESSED;
+			key_value = CLOSED;
+			OSTimeDly(2000); //延时20ms
+		}
+		
 		switch(key_value)
 		{
-			case UNPRESSED:
+			case CLOSED:
 				value = KEY0;
-				if (value) // key is not pressed
+				if (!value) // key is pressed
 				{
-				}
-				else // key is pressed
-				{
-					key_value = PRESSED;
+					key_value = PRESSED_OPEN;
 				}
 				break;
-			case PRESSED:
+			case PRESSED_OPEN:
 				if (imu_use_flag)
 				{
-					key_value = IMU_USED;
+					key_value = IMU_USED_OPEN; //IMU_USED
 					imu_use_flag = 0;
+					break;
 				}
 				if (gps_use_flag)
 				{
-					key_value = GPS_USED;
+					key_value = GPS_USED_OPEN; //GPS_USED
 					gps_use_flag = 0;
+					break;
 				}
 				break;
 				
-			case IMU_USED:
+			case IMU_USED_OPEN:
 				if (gps_use_flag)
 				{
-					key_value = UNPRESSED;
+					key_value = OPENED;
 					gps_use_flag = 0;
 				}
 				break;
-			case GPS_USED:
+			case GPS_USED_OPEN:
 				if (imu_use_flag)
 				{
-					key_value = UNPRESSED;
+					key_value = OPENED;
+					imu_use_flag = 0;
+				}
+				break;
+			case OPENED:
+				value = KEY0;
+				if (!value) // key is pressed
+				{
+					key_value = PRESSED_CLOSE;
+				}
+				break;
+			case PRESSED_CLOSE:
+				if (imu_use_flag)
+				{
+					key_value = IMU_USED_CLOSE; //IMU_USED
+					imu_use_flag = 0;
+					break;
+				}
+				if (gps_use_flag)
+				{
+					key_value = GPS_USED_CLOSE; //GPS_USED
+					gps_use_flag = 0;
+					break;
+				}
+				break;
+				
+			case IMU_USED_CLOSE:
+				if (gps_use_flag)
+				{
+					key_value = CLOSED;
+					gps_use_flag = 0;
+				}
+				break;
+			case GPS_USED_CLOSE:
+				if (imu_use_flag)
+				{
+					key_value = CLOSED;
 					imu_use_flag = 0;
 				}
 				break;
