@@ -117,7 +117,9 @@ void uart_init(u32 bound){
 	
 }
 
-
+extern volatile u8 gps_int_flag;
+u32 gps_time = 0;
+extern u8 key_flag;
 void USART1_IRQHandler(void)                	//串口1中断服务程序
 {
 	u8 Res;
@@ -127,36 +129,44 @@ void USART1_IRQHandler(void)                	//串口1中断服务程序
 	if(USART_GetITStatus(USART1, USART_IT_RXNE) != RESET)  //接收中断(接收到的数据必须是0x0d 0x0a结尾)
 	{
 		Res =USART_ReceiveData(USART1);//(USART1->DR);	//读取接收到的数据
-		
-		if((USART_RX_STA&0x8000)==0)//接收未完成
+		if (key_flag)
 		{
-			if(USART_RX_STA&0x4000)//接收到了0x0d
+			if((USART_RX_STA&0x8000)==0)//接收未完成
 			{
-				if(Res!=0x0a)USART_RX_STA=0;//接收错误,重新开始
-				else 
+				if(USART_RX_STA&0x4000)//接收到了0x0d
 				{
-					USART_RX_STA|=0x8000;	//接收完成了 
-					USART_RX_BUF[USART_RX_STA&0X3FFF]=Res ;
-					USART_RX_STA++;
+					if(Res!=0x0a)USART_RX_STA=0;//接收错误,重新开始
+					else 
+					{
+						USART_RX_STA|=0x8000;	//接收完成了 
+						gps_int_flag = 0;
+						USART_RX_BUF[USART_RX_STA&0X3FFF]=Res ;
+						USART_RX_STA++;
+					}
 				}
-			}
-			else //还没收到0X0D
-			{	
-				if(Res==0x0d)
-				{
-					USART_RX_STA|=0x4000;
-					USART_RX_BUF[USART_RX_STA&0X3FFF]=Res ;
-					USART_RX_STA++;
+				else //还没收到0X0D
+				{	
+					if (gps_int_flag == 0)
+					{
+						gps_int_flag = 1; // 开始接收数据
+						gps_time = OSTime ; // 记录此时的OS时间
+					}
+					if(Res==0x0d)
+					{
+						USART_RX_STA|=0x4000;
+						USART_RX_BUF[USART_RX_STA&0X3FFF]=Res ;
+						USART_RX_STA++;
+					}
+					else
+					{
+						USART_RX_BUF[USART_RX_STA&0X3FFF]=Res ;
+						USART_RX_STA++;
+						if(USART_RX_STA>(USART_REC_LEN-1))USART_RX_STA=0;//接收数据错误,重新开始接收	  
+					}		 
 				}
-				else
-				{
-					USART_RX_BUF[USART_RX_STA&0X3FFF]=Res ;
-					USART_RX_STA++;
-					if(USART_RX_STA>(USART_REC_LEN-1))USART_RX_STA=0;//接收数据错误,重新开始接收	  
-				}		 
-			}
-		}   		 
-  } 
+			}  
+		}		
+	} 
 #if SYSTEM_SUPPORT_OS 	//如果SYSTEM_SUPPORT_OS为真，则需要支持OS.
 	OSIntExit();  											 
 #endif

@@ -56,14 +56,6 @@ OS_STK SDWRITE_TASK_STK[SDWRITE_STK_SIZE];
 //任务函数
 void sd_write_task(void *pdata);
 /**************************************************/
-#define GPSSDWRITE_TASK_PRIO       			15
-//设置任务堆栈大小
-#define GPSSDWRITE_STK_SIZE  				8192
-//任务堆栈
-OS_STK GPSSDWRITE_TASK_STK[GPSSDWRITE_STK_SIZE];
-//任务函数
-void gps_sd_write_task(void *pdata);
-/**************************************************/
 #define KEYSCAN_TASK_PRIO       			7
 //设置任务堆栈大小
 #define KEYSCAN_STK_SIZE  				4096
@@ -90,6 +82,7 @@ KEY_STATUS key_value=CLOSED;
 volatile u8 imu_use_flag = 0;
 volatile u8 gps_use_flag = 0;
 
+volatile u8 gps_int_flag = 0;
 
 #define SEND_BUF_SIZE 200
 u8 SendBuff[SEND_BUF_SIZE]={0};
@@ -130,7 +123,6 @@ void start_task(void *pdata)
 // 	OSTaskCreate(led0_task,(void *)0,(OS_STK*)&LED0_TASK_STK[LED0_STK_SIZE-1],LED0_TASK_PRIO);						   
  	OSTaskCreate(spi_task,(void *)0,(OS_STK*)&SPI_TASK_STK[SPI_STK_SIZE-1],SPI_TASK_PRIO);		
 	OSTaskCreate(sd_write_task,(void *)0,(OS_STK*)&SDWRITE_TASK_STK[SDWRITE_STK_SIZE-1],SDWRITE_TASK_PRIO);		
-//	OSTaskCreate(gps_sd_write_task,(void *)0,(OS_STK*)&GPSSDWRITE_TASK_STK[GPSSDWRITE_STK_SIZE-1],GPSSDWRITE_TASK_PRIO);		
 	OSTaskCreate(keyscan_task,(void *)0,(OS_STK*)&KEYSCAN_TASK_STK[KEYSCAN_STK_SIZE-1],KEYSCAN_TASK_PRIO);		
 
 	OSTaskSuspend(START_TASK_PRIO);	//挂起起始任务.
@@ -153,9 +145,7 @@ u32 data;
 u8 key_flag=0;
 void spi_task(void *pdata)
 {
-	OS_CPU_SR cpu_sr=0;
-	char sendStrTest[200];
-	int comCnt;
+//	char sendStrTest[200];
 	/* Init Spi */
 	INT8U error;
 	u32 currentTime;
@@ -173,18 +163,11 @@ void spi_task(void *pdata)
 		// 1' 字符串 输入到buffer
 		if (key_flag)
 		{
-			OS_ENTER_CRITICAL();			//进入临界区(无法被中断打断)    
-			sprintf(fifo_buffer[fifo_info.tail],"%ld,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f\r\n",\
+			sprintf(fifo_buffer[fifo_info.tail],"%ld#%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f\r\n",\
 			currentTime,testImuTrue.gyro[0],testImuTrue.gyro[1],testImuTrue.gyro[2],testImuTrue.accl[0],testImuTrue.accl[1],\
 			testImuTrue.accl[2],testImuTrue.magn[0],testImuTrue.magn[1],testImuTrue.magn[2],testImuTrue.baro,testImuTrue.temp);
 //			sprintf(sendStrTest,"%ld\r\n",currentTime);
 //			sendmsg(sendStrTest);
-//			for (comCnt = 0; comCnt <strlen(sendStrTest);++comCnt)
-//			{
-//				USART_SendData(USART1, sendStrTest[comCnt]); //向串口 1 发送数据
-//				while(USART_GetFlagStatus(USART1,USART_FLAG_TC)!=SET);	
-//			}
-			OS_EXIT_CRITICAL();				//退出临界区(可以被中断打断)
 			// 2.0' 信号量 开始锁住
 			OSSemPend(fifo_lock,0,&error);
 			// 2' 队列加入一个数
@@ -192,15 +175,15 @@ void spi_task(void *pdata)
 			// 3' 信号量开始解锁
 			OSSemPost(fifo_lock);
 		}
-		OSTimeDly(49);
+		OSTimeDly(48);
 	}
 }
 
+extern u32 gps_time;
 void sd_write_task(void *pdata)
 {
 	/* Init SD card module */
 	INT8U error;
-	OS_CPU_SR cpu_sr=0;
 
 	//File object
 	FIL fil1;
@@ -208,7 +191,6 @@ void sd_write_task(void *pdata)
 	//Free and total space
 	char savename[10];
 	FRESULT res;
-	u32 currentTime;
 	u8 file_index=0;
 	
 	// GPS
@@ -260,33 +242,30 @@ void sd_write_task(void *pdata)
 						len=USART_RX_STA&0x3fff;
 						last_pack_len = len%100;
 						len -= last_pack_len; 
+						f_printf(&fil1,"G---%ld",gps_time);
 						for(t=0;t<len;t+=100)
 						{
 							// 写10个字节，目的防止该任务一直占用资源，每写10个字节就Dly0.1ms
 							// 缺点：会增加GPS数据写的时间。
-//							OS_ENTER_CRITICAL();			//进入临界区(无法被中断打断)    
 							f_write(&fil1,USART_RX_BUF+t,100,&reallen); 
-//							OS_EXIT_CRITICAL();				//退出临界区(可以被中断打断)					
 							OSTimeDly(1);
 						}
 						f_write(&fil1,USART_RX_BUF+t,last_pack_len,&reallen); 
+//						f_write(&fil1,USART_RX_BUF,len,&reallen); 
 						USART_RX_STA=0;
 						sendmsg("GPS write 1 record \r\n");
 					}
 					// 写IMU数据
-					if (!queue_is_empty(&fifo_info))
+					if (!queue_is_empty(&fifo_info) && ! gps_int_flag )//&& ! gps_int_flag
 					{
-						currentTime = OSTime;
-						OS_ENTER_CRITICAL();			//进入临界区(无法被中断打断)
-						f_printf(&fil1,"%d---%s",fifo_info.count,fifo_buffer[fifo_info.head]);
-						OS_EXIT_CRITICAL();				//退出临界区(可以被中断打断)
+//						f_printf(&fil1,"%d---%s",fifo_info.count,fifo_buffer[fifo_info.head]);
+						f_printf(&fil1,"I---%s",fifo_buffer[fifo_info.head]);
 						// 0' 信号量 锁定检测，并锁定信号量
 						OSSemPend(fifo_lock,0,&error);
 						queue_out(&fifo_info);
-						OSSemPost(fifo_lock);
 						// 9' 信号量解锁
-					}
-					
+						OSSemPost(fifo_lock);
+					} 
 					// 退出写模式检测
 					if (key_value == PRESSED_CLOSE)
 					{
@@ -305,119 +284,8 @@ void sd_write_task(void *pdata)
 		}
 		OSTimeDly(200); // 再经过20 ms进行按键检测
 	}
-}
-
-void gps_sd_write_task(void *pdata)
-{
-	OS_CPU_SR cpu_sr=0;
-	
-	u16 len = 0;
-	u16 last_pack_len = 0;
-	u16 t = 0;
-	UINT reallen;
-	char command[22]="LOG RANGEA ONTIME 1\r\n";
-	char msg[30];
-	u8 comCnt = 0;
-	//File object
-	FIL fil;
-	FILINFO t_filinfo;
-	//Free and total space
-//	uint32_t total, free;	
-	char savename[10];
-	FRESULT res;
-	u32 currentTime;
-	u8 file_index=0;
-	
-	// 延时10秒，等待GPS初始化完成
-//	OSTimeDly(100000);
-	for (comCnt = 0; comCnt <22;++comCnt)
-	{
-		USART_SendData(USART1, command[comCnt]); //向串口 1 发送数据
-		while(USART_GetFlagStatus(USART1,USART_FLAG_TC)!=SET);	
-	}
-	
-	while(1)
-	{
-		/* using a queue, when queue is not empty always write */
-		// TODO: 1' 当按键按下时，开始挂载SD卡
-		if (key_value == PRESSED_OPEN)
-		{
-			sendmsg("GPS SD In\r\n");
-			// 按键按下，需要IMU进行运算处理
-			gps_use_flag = 1;
-			OSTimeDly(2000);
-			
-			// detecte the file is exist or not.
-			while(1)
-			{
-				sprintf(savename,"0:/%03d-GPS.txt",file_index++);
-				res = f_stat(savename,&t_filinfo);
-				if (res==FR_NO_FILE)
-				{
-					break;
-				}
-			}
-			// open file
-			res = f_open(&fil, savename, FA_OPEN_ALWAYS | FA_READ | FA_WRITE);
-			if (res == FR_OK) //FR_OK
-			{
-				sendmsg("GPS file open success\r\n");
-				LED1 = 1;
-				// FIXME: 文件打开，给一个信号指示
-				// 开始写入数据				
-				while(1)
-				{
-//					OSTimeDly(2000); 
-//					f_write(&fil,"TestGPS\r\n",9,&reallen);
-					// 开始判断是否接收完成
-					// 写GPS数据时每写多少个字节就要OSTimeDly(1)一次
-					if(USART_RX_STA&0x8000)
-					{
-						// GPS接收完成
-						// 读取数据长度
-						len=USART_RX_STA&0x3fff;
-						last_pack_len = len%100;
-						len -= last_pack_len; 
-						for(t=0;t<len;t+=100)
-						{
-							// 写10个字节，目的防止该任务一直占用资源，每写10个字节就Dly0.1ms
-							// 缺点：会增加GPS数据写的时间。
-//							OS_ENTER_CRITICAL();			//进入临界区(无法被中断打断)    
-							f_write(&fil,USART_RX_BUF+t,100,&reallen); 
-//							OS_EXIT_CRITICAL();				//退出临界区(可以被中断打断)					
-							OSTimeDly(1);
-						}
-						f_write(&fil,USART_RX_BUF+t,last_pack_len,&reallen); 
-						USART_RX_STA=0;
-						sendmsg("GPS write 1 record \r\n");
-					}
-					// 退出写模式检测
-					if (key_value == PRESSED_CLOSE)
-					{
-						// 若是按键按下则退出while(1)循环
-						gps_use_flag = 1;
-						break;
-					}
-					OSTimeDly(1);
-				}
-				LED1 = 0;
-				//Close file, don't forget this!
-				f_close(&fil);
-			}
-			else
-			{
-				sprintf(msg,"GPS Open Fail %d\r\n",res);
-				sendmsg(msg);
-			}
-			OSTimeDly(2000);
-		}
-		OSTimeDly(200); // 再经过20 ms进行按键检测
-	}
-}
-
-// key scan task	
+}// key scan task	
 FATFS FatFs;
-
 void keyscan_task(void *pdata)
 {
 	int value,value2;
@@ -430,6 +298,7 @@ void keyscan_task(void *pdata)
 		if (value2 == 0 && key2 == UNPRESSED)
 		{
 			sdError = SD_Init();
+			sdError = sdError;
 			// 挂载SD卡
 			res = f_mount(&FatFs, "0:", 1);
 			if (res == FR_OK) 
