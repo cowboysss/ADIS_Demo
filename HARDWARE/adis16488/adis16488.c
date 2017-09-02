@@ -22,13 +22,13 @@ void ADISInit(void)
 
 void enableADIS(void)
 {
-//	PBout(14)=0;
+	PBout(14)=0;
 //	GPIO_ResetBits(GPIOB,GPIO_Pin_14);
 }
 
 void disableADIS(void)
 {
-//	PBout(14)=1;
+	PBout(14)=1;
 //	GPIO_SetBits(GPIOB,GPIO_Pin_14);
 }
 
