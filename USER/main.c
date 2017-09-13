@@ -205,7 +205,8 @@ void sd_write_task(void *pdata)
 		if (key_value == PRESSED_OPEN)
 		{
 //			LED1 = 1;
-			sendmsg("IMU SD Write In\r\n");
+//			sendmsg("IMU SD Write In\r\n");
+			sendmsg("LOG RANGEA ONTIME 1\r\n");
 			// 按键按下，需要IMU进行运算处理
 			imu_use_flag = 1;
 			OSTimeDly(2000);
@@ -229,7 +230,7 @@ void sd_write_task(void *pdata)
 				// 开始写入数据			
 				queue_init(&fifo_info);
 				key_flag=1; // 用于SPI同步采集数据
-				sendmsg("IMU file open success\r\n");
+//				sendmsg("IMU file open success\r\n");
 				while(1)
 				{
 					/* 进行数据的写入 */
@@ -253,7 +254,7 @@ void sd_write_task(void *pdata)
 						f_write(&fil1,USART_RX_BUF+t,last_pack_len,&reallen); 
 //						f_write(&fil1,USART_RX_BUF,len,&reallen); 
 						USART_RX_STA=0;
-						sendmsg("GPS write 1 record \r\n");
+//						sendmsg("GPS write 1 record \r\n");
 					}
 					// 写IMU数据
 					if (!queue_is_empty(&fifo_info) && ! gps_int_flag )//&& ! gps_int_flag
