@@ -8,7 +8,7 @@
 #define LED2 PCout(2) // reserved
 #define LEDRUN PCout(3) // program run
 
-
+u8 My_RTC_Init(void);
 void LED_Init(void);
 //void LED0_On(void);
 //void LED0_Off(void);

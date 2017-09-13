@@ -9,6 +9,7 @@
 
 #include "diskio.h"		/* FatFs lower layer API */
 #include "sdio_sdcard.h"
+#include "sys.h"
 //////////////////////////////////////////////////////////////////////////////////	 
 //本程序只供学习使用，未经作者许可，不得用于其它任何用途
 //ALIENTEK STM32F407开发板
@@ -216,8 +217,22 @@ DRESULT disk_ioctl (
 //31-25: Year(0-127 org.1980), 24-21: Month(1-12), 20-16: Day(1-31) */                                                                                                                                                                                                                                          
 //15-11: Hour(0-23), 10-5: Minute(0-59), 4-0: Second(0-29 *2) */                                                                                                                                                                                                                                                
 DWORD get_fattime (void)
-{				 
-	return 0;
+{	
+	RTC_TimeTypeDef RTC_TimeStruct;
+	RTC_DateTypeDef RTC_DateStruct;
+	u32 time=0;
+	RTC_GetTime(RTC_Format_BIN,&RTC_TimeStruct);
+	RTC_GetDate(RTC_Format_BIN, &RTC_DateStruct);
+//    calendar_get_date(&calendar);
+//    calendar_get_time(&calendar);
+    time=(RTC_DateStruct.RTC_Year+20)<<25;//??
+    time|=(RTC_DateStruct.RTC_Month)<<21; //??
+    time|=(RTC_DateStruct.RTC_Date)<<16;  //??
+    time|=(RTC_TimeStruct.RTC_Hours)<<11;        //?
+    time|=(RTC_TimeStruct.RTC_Minutes)<<5;      //?
+    time|=(RTC_TimeStruct.RTC_Seconds/2);         //? 
+    return time;
+//	return 0;
 }			 
 
 

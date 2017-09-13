@@ -106,6 +106,7 @@ int main(void)
 	delay_init(168);		  //初始化延时函数
 	LED_Init();		        //初始化LED端口 
 	uart_init(115200);
+	My_RTC_Init();
 	fifo_lock = OSSemCreate(1);
 	queue_init(&fifo_info);
 //	MYDMA_Config(DMA2_Stream7,DMA_Channel_4,(u32)&USART1->DR,(u32)SendBuff, SEND_BUF_SIZE);
