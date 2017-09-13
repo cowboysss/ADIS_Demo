@@ -6,7 +6,7 @@ void ADISInit(void)
 	// CS Pin
 	GPIO_InitTypeDef  GPIO_InitStructure;
 	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOB, ENABLE);//使能GPIOB时钟
-	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_14;//PB3~5复用功能输出	
+	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_6;//PB3~5复用功能输出	
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;//复用功能
 	GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;//推挽输出
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;//100MHz
@@ -14,7 +14,7 @@ void ADISInit(void)
 	GPIO_Init(GPIOB, &GPIO_InitStructure);//初始化
 
 	// CS = 1
-	PBout(14)=1;
+	PBout(6)=1;
 //	GPIO_SetBits(GPIOB,GPIO_Pin_14);
 	// SPI Pin
 	SPI1_Init();
@@ -22,13 +22,13 @@ void ADISInit(void)
 
 void enableADIS(void)
 {
-	PBout(14)=0;
+	PBout(6)=0;
 //	GPIO_ResetBits(GPIOB,GPIO_Pin_14);
 }
 
 void disableADIS(void)
 {
-	PBout(14)=1;
+	PBout(6)=1;
 //	GPIO_SetBits(GPIOB,GPIO_Pin_14);
 }
 

@@ -104,7 +104,7 @@ int main(void)
 { 
 	key_sdWrite();
 	delay_init(168);		  //初始化延时函数
-	LED0_Init();		        //初始化LED端口 
+	LED_Init();		        //初始化LED端口 
 	uart_init(115200);
 	fifo_lock = OSSemCreate(1);
 	queue_init(&fifo_info);
@@ -120,7 +120,7 @@ void start_task(void *pdata)
   OS_CPU_SR cpu_sr=0;
 	pdata = pdata; 
   OS_ENTER_CRITICAL();			//进入临界区(无法被中断打断)    
-// 	OSTaskCreate(led0_task,(void *)0,(OS_STK*)&LED0_TASK_STK[LED0_STK_SIZE-1],LED0_TASK_PRIO);						   
+ 	OSTaskCreate(led0_task,(void *)0,(OS_STK*)&LED0_TASK_STK[LED0_STK_SIZE-1],LED0_TASK_PRIO);						   
  	OSTaskCreate(spi_task,(void *)0,(OS_STK*)&SPI_TASK_STK[SPI_STK_SIZE-1],SPI_TASK_PRIO);		
 	OSTaskCreate(sd_write_task,(void *)0,(OS_STK*)&SDWRITE_TASK_STK[SDWRITE_STK_SIZE-1],SDWRITE_TASK_PRIO);		
 	OSTaskCreate(keyscan_task,(void *)0,(OS_STK*)&KEYSCAN_TASK_STK[KEYSCAN_STK_SIZE-1],KEYSCAN_TASK_PRIO);		
@@ -134,9 +134,9 @@ void led0_task(void *pdata)
 {	 	
 	while(1)
 	{
-		LED0=0;
+		LEDRUN=0; //LEDRUN
 		OSTimeDly(5000);
-		LED0=1;
+		LEDRUN=1;
 		OSTimeDly(5000);
 	};
 }
@@ -152,6 +152,7 @@ void spi_task(void *pdata)
 	IMU_Data_Raw testImu;
 	IMU_Data testImuTrue;
 	ADISInit();
+	
 	/* Do spi transmission */
 	while(1)
 	{
@@ -214,7 +215,7 @@ void sd_write_task(void *pdata)
 			// detecte the file is exist or not.
 			while(1)
 			{
-				sprintf(savename,"0:/%03d-IMU.txt",file_index++);
+				sprintf(savename,"0:/%03d.txt",file_index++);
 				res = f_stat(savename,&t_filinfo);
 				if (res==FR_NO_FILE)
 				{
@@ -225,7 +226,7 @@ void sd_write_task(void *pdata)
 			res = f_open(&fil1, savename, FA_OPEN_ALWAYS | FA_READ | FA_WRITE);
 			if (res == FR_OK) 
 			{
-				LED0=0;
+				LED1=0;
 				// FIXME: 文件打开，给一个信号指示
 				// 开始写入数据			
 				queue_init(&fifo_info);
@@ -277,7 +278,7 @@ void sd_write_task(void *pdata)
 					OSTimeDly(1);
 				}
 				key_flag=0;
-				LED0=1;
+				LED1=1;
 				//Close file, don't forget this!
 				f_close(&fil1);
 			}
@@ -305,7 +306,7 @@ void keyscan_task(void *pdata)
 			if (res == FR_OK) 
 			{
 				// 挂载 OK亮灯
-				LED1 = 0;
+				LED0 = 0;
 				key2 = PRESSED;
 			}
 			OSTimeDly(2000); //延时20ms
@@ -316,7 +317,7 @@ void keyscan_task(void *pdata)
 			//Unmount drive, don't forget this!
 			f_mount(0, "0:", 1);
 			// turn off the light
-			LED1 = 1;
+			LED0 = 1;
 			key2 = UNPRESSED;
 			key_value = CLOSED;
 			OSTimeDly(2000); //延时20ms
@@ -325,11 +326,11 @@ void keyscan_task(void *pdata)
 		switch(key_value)
 		{
 			case CLOSED:
-				value = KEY0;
+				value = KEY2;
 				if (!value) // key is pressed
 				{
 					OSTimeDly(200);
-					value = KEY0;
+					value = KEY2;
 					if (!value) // key is pressed
 					{
 						key_value = PRESSED_OPEN;
@@ -346,11 +347,11 @@ void keyscan_task(void *pdata)
 				break;
 				
 			case OPENED:
-				value = KEY0;
+				value = KEY2;
 				if (!value) // key is pressed
 				{
 					OSTimeDly(200);
-					value = KEY0;
+					value = KEY2;
 					if (!value) // key is pressed
 					{
 						key_value = PRESSED_CLOSE;
