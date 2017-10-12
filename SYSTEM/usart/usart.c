@@ -104,15 +104,15 @@ void uart_init(u32 bound){
 	//USART_ClearFlag(USART1, USART_FLAG_TC);
 	
 #if EN_USART1_RX	
-	USART_ITConfig(USART1, USART_IT_RXNE, ENABLE);//开启相关中断
-
+	// USART_ITConfig(USART1, USART_IT_RXNE, ENABLE);//开启相关中断
+	
+    USART_ITConfig(USART1, USART_IT_IDLE, ENABLE); //开启串口空闲中断
 	//Usart1 NVIC 配置
 	NVIC_InitStructure.NVIC_IRQChannel = USART1_IRQn;//串口1中断通道
 	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority=3;//抢占优先级3
 	NVIC_InitStructure.NVIC_IRQChannelSubPriority =3;		//子优先级3
 	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;			//IRQ通道使能
-	NVIC_Init(&NVIC_InitStructure);	//根据指定的参数初始化VIC寄存器、
-
+	NVIC_Init(&NVIC_InitStructure);	//根据指定的参数初始化NVIC寄存器
 #endif
 	
 }
@@ -123,6 +123,7 @@ extern u8 key_flag;
 void USART1_IRQHandler(void)                	//串口1中断服务程序
 {
 	u8 Res;
+	u16 num = 0;
 #if SYSTEM_SUPPORT_OS 		//如果SYSTEM_SUPPORT_OS为真，则需要支持OS.
 	OSIntEnter();    
 #endif
@@ -166,7 +167,23 @@ void USART1_IRQHandler(void)                	//串口1中断服务程序
 				}
 			}  
 		}		
-	} 
+	}
+	if (USART_GetITStatus(USART1, USART_IT_IDLE) != RESET)
+	{
+		// 空闲中断的处理
+		num = USART1->SR;
+		num = USART1->DR; //清除USART_IT_IDLE标志位
+		// USART_DMACmd(USART1,USART_DMAReq_Rx,ENABLE);
+		DMA_Cmd(DMA2_Stream2, DISABLE);                      //关闭DMA传输 
+		// while (DMA_GetCmdStatus(DMA_Streamx) != DISABLE){}	//确保DMA可以被设置  
+		num = USART_REC_LEN -  DMA_GetCurrDataCounter(DMA2_Stream2);      //获取当前接收数据长度
+		USART_RX_STA+=num;	// 将数据长度保存到全局变量中
+		USART_RX_BUF[num] = '\0'; // 在数据尾部加上空止符
+		DMA_SetCurrDataCounter(DMA2_Stream2,USART_REC_LEN);          //数据传输量  
+		DMA_Cmd(DMA2_Stream2, ENABLE);                      //开启DMA传输 
+		USART_RX_STA|=0x8000;	//接收完成了 
+	}
+		
 #if SYSTEM_SUPPORT_OS 	//如果SYSTEM_SUPPORT_OS为真，则需要支持OS.
 	OSIntExit();  											 
 #endif

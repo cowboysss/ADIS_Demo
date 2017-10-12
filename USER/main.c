@@ -110,6 +110,7 @@ int main(void)
 	fifo_lock = OSSemCreate(1);
 	queue_init(&fifo_info);
 //	MYDMA_Config(DMA2_Stream7,DMA_Channel_4,(u32)&USART1->DR,(u32)SendBuff, SEND_BUF_SIZE);
+	USART_DMA_Rx_Config(DMA2_Stream2,DMA_Channel_4,(u32)&USART1->DR,(u32)USART_RX_BUF,USART_REC_LEN);
 	OSInit();   
  	OSTaskCreate(start_task,(void *)0,(OS_STK *)&START_TASK_STK[START_STK_SIZE-1],START_TASK_PRIO );//创建起始任务
 	OSStart();	
