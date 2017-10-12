@@ -165,17 +165,20 @@ void spi_task(void *pdata)
 		// 1' 字符串 输入到buffer
 		if (key_flag)
 		{
-			sprintf(fifo_buffer[fifo_info.tail],"%ld#%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f\r\n",\
-			currentTime,testImuTrue.gyro[0],testImuTrue.gyro[1],testImuTrue.gyro[2],testImuTrue.accl[0],testImuTrue.accl[1],\
-			testImuTrue.accl[2],testImuTrue.magn[0],testImuTrue.magn[1],testImuTrue.magn[2],testImuTrue.baro,testImuTrue.temp);
-//			sprintf(sendStrTest,"%ld\r\n",currentTime);
-//			sendmsg(sendStrTest);
-			// 2.0' 信号量 开始锁住
-			OSSemPend(fifo_lock,0,&error);
-			// 2' 队列加入一个数
-			queue_in(&fifo_info);
-			// 3' 信号量开始解锁
-			OSSemPost(fifo_lock);
+			if (!queue_is_full(&fifo_info))
+			{
+				sprintf(fifo_buffer[fifo_info.tail],"%ld#%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f\r\n",\
+				currentTime,testImuTrue.gyro[0],testImuTrue.gyro[1],testImuTrue.gyro[2],testImuTrue.accl[0],testImuTrue.accl[1],\
+				testImuTrue.accl[2],testImuTrue.magn[0],testImuTrue.magn[1],testImuTrue.magn[2],testImuTrue.baro,testImuTrue.temp);
+//				sprintf(sendStrTest,"%ld\r\n",currentTime);
+//				sendmsg(sendStrTest);
+				// 2.0' 信号量 开始锁住
+				OSSemPend(fifo_lock,0,&error);
+				// 2' 队列加入一个数
+				queue_in(&fifo_info);
+				// 3' 信号量开始解锁
+				OSSemPost(fifo_lock);
+			}
 		}
 		OSTimeDly(48);
 	}
@@ -266,6 +269,7 @@ void sd_write_task(void *pdata)
 							f_write(&fil1,USART_RX_BUF+t,last_pack_len,&reallen); 
 //							f_write(&fil1,USART_RX_BUF,len,&reallen); 
 							USART_RX_STA=0;
+							f_sync(&fil1);
 //							sendmsg("GPS write 1 record \r\n");
 						}
 						// 写IMU数据
@@ -278,6 +282,7 @@ void sd_write_task(void *pdata)
 							queue_out(&fifo_info);
 							// 9' 信号量解锁
 							OSSemPost(fifo_lock);
+							f_sync(&fil1);
 						} 
 						// 退出写模式检测
 						if (key_value == PRESSED_CLOSE)
@@ -304,10 +309,10 @@ void sd_write_task(void *pdata)
 
 void keyscan_task(void *pdata)
 {
-	int value,value2;
-	SD_Error sdError;
-	FRESULT res;
-	KEY_STATUS key2 = UNPRESSED;
+	int value; //,value2;
+	// SD_Error sdError;
+	// FRESULT res;
+	// KEY_STATUS key2 = UNPRESSED;
 	while(1)
 	{
 		switch(key_value)
