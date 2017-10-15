@@ -133,23 +133,44 @@ void ADIS_Read11AxisData( IMU_Data_Raw *raw )
 void ADIS_Raw2Data(IMU_Data *dstData, IMU_Data_Raw *srcRawData)
 {
 	/* change the raw data to true data*/
-	dstData->gyro[0] = srcRawData->gyro_out[0]*0.02+srcRawData->gyro_low[0]*0.02/65536.0;
-	dstData->gyro[1] = srcRawData->gyro_out[1]*0.02+srcRawData->gyro_low[1]*0.02/65536.0;
-	dstData->gyro[2] = srcRawData->gyro_out[2]*0.02+srcRawData->gyro_low[2]*0.02/65536.0;
+	if (srcRawData->gyro_out[0] == (int16_t)0xFFFF || srcRawData->gyro_out[0] == 0x00)
+	{
+		dstData->gyro[0] = 0.0f;
+		dstData->gyro[1] = 0.0f;
+		dstData->gyro[2] = 0.0f;
 
-	dstData->accl[0] = srcRawData->accl_out[0]*0.8+srcRawData->accl_low[0]*0.8/65536.0;
-	dstData->accl[1] = srcRawData->accl_out[1]*0.8+srcRawData->accl_low[1]*0.8/65536.0;
-	dstData->accl[2] = srcRawData->accl_out[2]*0.8+srcRawData->accl_low[2]*0.8/65536.0;
+		dstData->accl[0] = 0.0f;
+		dstData->accl[1] = 0.0f;
+		dstData->accl[2] = 0.0f;
 
-	dstData->magn[0] = srcRawData->magn_out[0]*0.1;
-	dstData->magn[1] = srcRawData->magn_out[1]*0.1;
-	dstData->magn[2] = srcRawData->magn_out[2]*0.1;
+		dstData->magn[0] = 0.0f;
+		dstData->magn[1] = 0.0f;
+		dstData->magn[2] = 0.0f;
 
-	// baro
-	dstData->baro = srcRawData->baro_out*40.0+srcRawData->baro_low*20.0/65536.0;
-	// temp
-	dstData->temp = srcRawData->temp*0.00565+25;
-	
+		// baro
+		dstData->baro = 0.0f;
+		// temp
+		dstData->temp = 25.0f;		
+	}
+	else
+	{
+		dstData->gyro[0] = srcRawData->gyro_out[0]*0.02+srcRawData->gyro_low[0]*0.02/65536.0;
+		dstData->gyro[1] = srcRawData->gyro_out[1]*0.02+srcRawData->gyro_low[1]*0.02/65536.0;
+		dstData->gyro[2] = srcRawData->gyro_out[2]*0.02+srcRawData->gyro_low[2]*0.02/65536.0;
+
+		dstData->accl[0] = srcRawData->accl_out[0]*0.8+srcRawData->accl_low[0]*0.8/65536.0;
+		dstData->accl[1] = srcRawData->accl_out[1]*0.8+srcRawData->accl_low[1]*0.8/65536.0;
+		dstData->accl[2] = srcRawData->accl_out[2]*0.8+srcRawData->accl_low[2]*0.8/65536.0;
+
+		dstData->magn[0] = srcRawData->magn_out[0]*0.1;
+		dstData->magn[1] = srcRawData->magn_out[1]*0.1;
+		dstData->magn[2] = srcRawData->magn_out[2]*0.1;
+
+		// baro
+		dstData->baro = srcRawData->baro_out*40.0+srcRawData->baro_low*20.0/65536.0;
+		// temp
+		dstData->temp = srcRawData->temp*0.00565+25;
+	}
 //	printf("%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f\r\n",dstData->gyro[0],dstData->gyro[1],dstData->gyro[2],dstData->accl[0],dstData->accl[1],dstData->accl[2],dstData->magn[0],dstData->magn[1],dstData->magn[2],dstData->baro,dstData->temp);
 }
 

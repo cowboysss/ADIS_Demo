@@ -1,4 +1,5 @@
 #include "sys.h"
+#include "string.h"
 #include "delay.h"
 #include "usart.h"
 #include "driver_led.h"
@@ -99,18 +100,19 @@ void sendmsg(char * sendStrTest)
 		while(USART_GetFlagStatus(USART1,USART_FLAG_TC)!=SET);	
 	}	
 }
-
+u8 USART_RX_BUF[USART_REC_LEN];
 int main(void)
 { 
 	key_sdWrite();
 	delay_init(168);		  //初始化延时函数
 	LED_Init();		        //初始化LED端口 
+	ADISInit();
 	uart_init(115200);
+	USART_DMA_Rx_Config(DMA2_Stream5,DMA_Channel_4,(u32)&USART1->DR,(u32)USART_RX_BUF,USART_REC_LEN);
 	My_RTC_Init();
 	fifo_lock = OSSemCreate(1);
 	queue_init(&fifo_info);
 //	MYDMA_Config(DMA2_Stream7,DMA_Channel_4,(u32)&USART1->DR,(u32)SendBuff, SEND_BUF_SIZE);
-	USART_DMA_Rx_Config(DMA2_Stream2,DMA_Channel_4,(u32)&USART1->DR,(u32)USART_RX_BUF,USART_REC_LEN);
 	OSInit();   
  	OSTaskCreate(start_task,(void *)0,(OS_STK *)&START_TASK_STK[START_STK_SIZE-1],START_TASK_PRIO );//创建起始任务
 	OSStart();	
@@ -144,7 +146,8 @@ void led0_task(void *pdata)
 }
 u16 DeviceID=0;
 u32 data;
-u8 key_flag=0;
+volatile u8 key_flag=0;
+
 void spi_task(void *pdata)
 {
 //	char sendStrTest[200];
@@ -152,8 +155,7 @@ void spi_task(void *pdata)
 	INT8U error;
 	u32 currentTime;
 	IMU_Data_Raw testImu;
-	IMU_Data testImuTrue;
-	ADISInit();
+	IMU_Data testImuTrue = {{0,0,0},{0,0,0},{0,0,0},0,0};
 	
 	/* Do spi transmission */
 	while(1)
@@ -264,20 +266,22 @@ void sd_write_task(void *pdata)
 							{
 								// 写10个字节，目的防止该任务一直占用资源，每写10个字节就Dly0.1ms
 								// 缺点：会增加GPS数据写的时间。
-								f_write(&fil1,USART_RX_BUF+t,100,&reallen); 
+								f_write(&fil1,(void *)(USART_RX_BUF+t),100,&reallen); 
 								OSTimeDly(1);
 							}
-							f_write(&fil1,USART_RX_BUF+t,last_pack_len,&reallen); 
+							f_write(&fil1,(void *)(USART_RX_BUF+t),last_pack_len,&reallen); 
 //							f_write(&fil1,USART_RX_BUF,len,&reallen); 
 							USART_RX_STA=0;
 							f_sync(&fil1);
 //							sendmsg("GPS write 1 record \r\n");
 						}
 						// 写IMU数据
-						if (!queue_is_empty(&fifo_info) && ! gps_int_flag )//&& ! gps_int_flag
+						if (!queue_is_empty(&fifo_info))//&& ! gps_int_flag
 						{
 //							f_printf(&fil1,"%d---%s",fifo_info.count,fifo_buffer[fifo_info.head]);
-							f_printf(&fil1,"I---%s",fifo_buffer[fifo_info.head]);
+							f_write(&fil1,"I---",4,&reallen);
+							f_write(&fil1,&(fifo_buffer[fifo_info.head]),strlen(fifo_buffer[fifo_info.head]),&reallen);
+//							f_printf(&fil1,"I---%s",fifo_buffer[fifo_info.head]);
 							// 0' 信号量 锁定检测，并锁定信号量
 							OSSemPend(fifo_lock,0,&error);
 							queue_out(&fifo_info);

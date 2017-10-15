@@ -60,7 +60,7 @@ int fputc(int ch, FILE *f)
 #if EN_USART1_RX   //如果使能了接收
 //串口1中断服务程序
 //注意,读取USARTx->SR能避免莫名其妙的错误   	
-u8 USART_RX_BUF[USART_REC_LEN];     //接收缓冲,最大USART_REC_LEN个字节.
+// u8 USART_RX_BUF[USART_REC_LEN];     //接收缓冲,最大USART_REC_LEN个字节.
 //接收状态
 //bit15，	接收完成标志
 //bit14，	接收到0x0d
@@ -114,19 +114,20 @@ void uart_init(u32 bound){
 	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;			//IRQ通道使能
 	NVIC_Init(&NVIC_InitStructure);	//根据指定的参数初始化NVIC寄存器
 #endif
-	
+	USART_DMACmd(USART1, USART_DMAReq_Rx, ENABLE);
 }
 
 extern volatile u8 gps_int_flag;
 u32 gps_time = 0;
-extern u8 key_flag;
+extern volatile u8 key_flag;
 void USART1_IRQHandler(void)                	//串口1中断服务程序
 {
-	u8 Res;
+	// u8 Res;
 	u16 num = 0;
 #if SYSTEM_SUPPORT_OS 		//如果SYSTEM_SUPPORT_OS为真，则需要支持OS.
 	OSIntEnter();    
 #endif
+	/*
 	if(USART_GetITStatus(USART1, USART_IT_RXNE) != RESET)  //接收中断(接收到的数据必须是0x0d 0x0a结尾)
 	{
 		Res =USART_ReceiveData(USART1);//(USART1->DR);	//读取接收到的数据
@@ -168,20 +169,23 @@ void USART1_IRQHandler(void)                	//串口1中断服务程序
 			}  
 		}		
 	}
+	*/
 	if (USART_GetITStatus(USART1, USART_IT_IDLE) != RESET)
 	{
+		DMA_Cmd(DMA2_Stream5, DISABLE);                      //关闭DMA传输 
 		// 空闲中断的处理
 		num = USART1->SR;
-		num = USART1->DR; //清除USART_IT_IDLE标志位
-		// USART_DMACmd(USART1,USART_DMAReq_Rx,ENABLE);
-		DMA_Cmd(DMA2_Stream2, DISABLE);                      //关闭DMA传输 
-		// while (DMA_GetCmdStatus(DMA_Streamx) != DISABLE){}	//确保DMA可以被设置  
-		num = USART_REC_LEN -  DMA_GetCurrDataCounter(DMA2_Stream2);      //获取当前接收数据长度
-		USART_RX_STA+=num;	// 将数据长度保存到全局变量中
-		USART_RX_BUF[num] = '\0'; // 在数据尾部加上空止符
-		DMA_SetCurrDataCounter(DMA2_Stream2,USART_REC_LEN);          //数据传输量  
-		DMA_Cmd(DMA2_Stream2, ENABLE);                      //开启DMA传输 
-		USART_RX_STA|=0x8000;	//接收完成了 
+		num = USART1->DR; //清除USART_IT_IDLE标志位 
+		num = USART_REC_LEN -  DMA_GetCurrDataCounter(DMA2_Stream5);      //获取当前接收数据长度
+		if (key_flag)
+		{
+			USART_RX_STA+=num;	// 将数据长度保存到全局变量中
+			USART_RX_STA|=0x8000;	//接收完成了
+			gps_time = OSTime - num * 9 * 10000 / 115200 ; // 记录此时的OS时间
+		}
+		DMA_ClearFlag(DMA2_Stream5,DMA_FLAG_TCIF5 | DMA_FLAG_FEIF5 | DMA_FLAG_DMEIF5 | DMA_FLAG_TEIF5 | DMA_FLAG_HTIF5);
+		DMA_SetCurrDataCounter(DMA2_Stream5,USART_REC_LEN);          //数据传输量  
+		DMA_Cmd(DMA2_Stream5, ENABLE);                      //开启DMA传输 
 	}
 		
 #if SYSTEM_SUPPORT_OS 	//如果SYSTEM_SUPPORT_OS为真，则需要支持OS.
