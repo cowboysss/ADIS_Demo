@@ -134,10 +134,12 @@ void start_task(void *pdata)
 } 
 
 //LED0任务
+volatile u8 one_second_flag = 0;
 void led0_task(void *pdata)
 {	 	
 	while(1)
 	{
+		one_second_flag = 1;
 		LEDRUN=0; //LEDRUN
 		OSTimeDly(5000);
 		LEDRUN=1;
@@ -255,7 +257,6 @@ void sd_write_task(void *pdata)
 						// 写之前进行 检测，队列是否为空, 若队列为空，则进行2ms等待
 						while (queue_is_empty(&fifo_info) && !(USART_RX_STA&0x8000)){OSTimeDly(20);};
 						// 写GPS数据
-						/*
 						if (USART_RX_STA&0x8000)
 						{
 							// 采集到GPS数据，进行写操作。
@@ -271,24 +272,30 @@ void sd_write_task(void *pdata)
 								OSTimeDly(1);
 							}
 							f_write(&fil1,(void *)(USART_RX_BUF+t),last_pack_len,&reallen); 
-//							f_write(&fil1,USART_RX_BUF,len,&reallen); 
 							USART_RX_STA=0;
-							f_sync(&fil1);
+//							f_sync(&fil1);
 //							sendmsg("GPS write 1 record \r\n");
 						}
-						*/
+						
 						// 写IMU数据
 						if (!queue_is_empty(&fifo_info))//&& ! gps_int_flag
 						{
 							f_printf(&fil1,"%d---%s",fifo_info.count,fifo_buffer[fifo_info.head]);
 //							f_write(&fil1,"I---",4,&reallen);
 //							f_write(&fil1,&(fifo_buffer[fifo_info.head]),strlen(fifo_buffer[fifo_info.head]),&reallen);
+
 //							f_printf(&fil1,"I---%s",fifo_buffer[fifo_info.head]);
 							// 0' 信号量 锁定检测，并锁定信号量
 							OSSemPend(fifo_lock,0,&error);
 							queue_out(&fifo_info);
 							// 9' 信号量解锁
 							OSSemPost(fifo_lock);
+//							f_sync(&fil1);
+						}
+						// 保存同步
+						if(one_second_flag)
+						{
+							one_second_flag = 0;
 							f_sync(&fil1);
 						}
 						// 退出写模式检测
