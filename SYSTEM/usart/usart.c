@@ -65,7 +65,7 @@ int fputc(int ch, FILE *f)
 //bit15，	接收完成标志
 //bit14，	接收到0x0d
 //bit13~0，	接收到的有效字节数目
-u16 USART_RX_STA=0;       //接收状态标记	
+volatile u16 USART_RX_STA=0;       //接收状态标记	
 
 //初始化IO 串口1 
 //bound:波特率
@@ -182,6 +182,10 @@ void USART1_IRQHandler(void)                	//串口1中断服务程序
 			USART_RX_STA+=num;	// 将数据长度保存到全局变量中
 			USART_RX_STA|=0x8000;	//接收完成了
 			gps_time = OSTime - num * 9 * 10000 / 115200 ; // 记录此时的OS时间
+		}
+		else
+		{
+			USART_RX_STA = 0;
 		}
 		DMA_ClearFlag(DMA2_Stream5,DMA_FLAG_TCIF5 | DMA_FLAG_FEIF5 | DMA_FLAG_DMEIF5 | DMA_FLAG_TEIF5 | DMA_FLAG_HTIF5);
 		DMA_SetCurrDataCounter(DMA2_Stream5,USART_REC_LEN);          //数据传输量  

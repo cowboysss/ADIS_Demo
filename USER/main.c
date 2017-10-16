@@ -88,7 +88,7 @@ volatile u8 gps_int_flag = 0;
 #define SEND_BUF_SIZE 200
 u8 SendBuff[SEND_BUF_SIZE]={0};
 extern char fifo_buffer[QUEUE_SIZE][MSG_LENGTH];
-extern Queue_Info fifo_info;
+extern volatile Queue_Info fifo_info;
 OS_EVENT * fifo_lock;
 
 void sendmsg(char * sendStrTest)
@@ -252,9 +252,10 @@ void sd_write_task(void *pdata)
 					while(1)
 					{
 						/* 进行数据的写入 */
-						// 写之前进行 检测，队列是否为空, 若队列为空，则进行5ms等待
+						// 写之前进行 检测，队列是否为空, 若队列为空，则进行2ms等待
 						while (queue_is_empty(&fifo_info) && !(USART_RX_STA&0x8000)){OSTimeDly(20);};
 						// 写GPS数据
+						/*
 						if (USART_RX_STA&0x8000)
 						{
 							// 采集到GPS数据，进行写操作。
@@ -275,12 +276,13 @@ void sd_write_task(void *pdata)
 							f_sync(&fil1);
 //							sendmsg("GPS write 1 record \r\n");
 						}
+						*/
 						// 写IMU数据
 						if (!queue_is_empty(&fifo_info))//&& ! gps_int_flag
 						{
-//							f_printf(&fil1,"%d---%s",fifo_info.count,fifo_buffer[fifo_info.head]);
-							f_write(&fil1,"I---",4,&reallen);
-							f_write(&fil1,&(fifo_buffer[fifo_info.head]),strlen(fifo_buffer[fifo_info.head]),&reallen);
+							f_printf(&fil1,"%d---%s",fifo_info.count,fifo_buffer[fifo_info.head]);
+//							f_write(&fil1,"I---",4,&reallen);
+//							f_write(&fil1,&(fifo_buffer[fifo_info.head]),strlen(fifo_buffer[fifo_info.head]),&reallen);
 //							f_printf(&fil1,"I---%s",fifo_buffer[fifo_info.head]);
 							// 0' 信号量 锁定检测，并锁定信号量
 							OSSemPend(fifo_lock,0,&error);
@@ -288,7 +290,7 @@ void sd_write_task(void *pdata)
 							// 9' 信号量解锁
 							OSSemPost(fifo_lock);
 							f_sync(&fil1);
-						} 
+						}
 						// 退出写模式检测
 						if (key_value == PRESSED_CLOSE)
 						{

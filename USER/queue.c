@@ -7,16 +7,16 @@ the queue is about 20 size
 #include "interface.h"
 
 char fifo_buffer[QUEUE_SIZE][MSG_LENGTH];
-Queue_Info fifo_info;
+volatile Queue_Info fifo_info;
 
-void queue_init(Queue_Info *f_fifoInfo)
+void queue_init(volatile Queue_Info *f_fifoInfo)
 {
 	f_fifoInfo->count = 0;
 	f_fifoInfo->head = 0;
 	f_fifoInfo->tail = 0;
 }
 
-void queue_in(Queue_Info *f_fifoInfo)
+void queue_in(volatile Queue_Info *f_fifoInfo)
 {
 	if (f_fifoInfo->count >= QUEUE_SIZE)
 	{
@@ -27,7 +27,7 @@ void queue_in(Queue_Info *f_fifoInfo)
 	f_fifoInfo->tail = (f_fifoInfo->tail+1)%QUEUE_SIZE;
 }
 
-void queue_out(Queue_Info *f_fifoInfo)
+void queue_out(volatile Queue_Info *f_fifoInfo)
 {
 	if (f_fifoInfo->count == 0)
 	{
@@ -38,7 +38,7 @@ void queue_out(Queue_Info *f_fifoInfo)
 	f_fifoInfo->head = (f_fifoInfo->head+1)%QUEUE_SIZE;
 }
 
-int queue_is_full(Queue_Info *f_fifoInfo)
+int queue_is_full(volatile Queue_Info *f_fifoInfo)
 {
 	if (f_fifoInfo->count == QUEUE_SIZE)
 	{
@@ -52,7 +52,7 @@ int queue_is_full(Queue_Info *f_fifoInfo)
 	}
 }
 
-int queue_is_empty(Queue_Info *f_fifoInfo)
+int queue_is_empty(volatile Queue_Info *f_fifoInfo)
 {
 	if (f_fifoInfo->count == 0)
 	{
