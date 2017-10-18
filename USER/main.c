@@ -280,9 +280,9 @@ void sd_write_task(void *pdata)
 						// 写IMU数据
 						if (!queue_is_empty(&fifo_info))//&& ! gps_int_flag
 						{
-							f_printf(&fil1,"%d---%s",fifo_info.count,fifo_buffer[fifo_info.head]);
-//							f_write(&fil1,"I---",4,&reallen);
-//							f_write(&fil1,&(fifo_buffer[fifo_info.head]),strlen(fifo_buffer[fifo_info.head]),&reallen);
+//							f_printf(&fil1,"%d---%s",fifo_info.count,fifo_buffer[fifo_info.head]);
+							f_write(&fil1,"I---",4,&reallen);
+							f_write(&fil1,&(fifo_buffer[fifo_info.head]),strlen(fifo_buffer[fifo_info.head]),&reallen);
 
 //							f_printf(&fil1,"I---%s",fifo_buffer[fifo_info.head]);
 							// 0' 信号量 锁定检测，并锁定信号量
@@ -303,6 +303,7 @@ void sd_write_task(void *pdata)
 						{
 							// 若是按键按下则退出while(1)循环
 							imu_use_flag = 1;
+//							sendmsg("LOG RANGEA ONTIME 0\r\n"); // 关闭LOG信息的发送
 							break;
 						}
 						OSTimeDly(1);
